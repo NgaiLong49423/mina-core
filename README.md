@@ -2,21 +2,25 @@
 Multi-agent reasoning system with loop awareness, human-in-the-loop arbitration, and long-term reasoning memory.
 # MINA – Essence & Core
 
-> **Mina is not an assistant.  
-> Mina is a system that reasons, disagrees, loops, and knows when to stop.**
+> **Mina is not just an assistant.  
+> Mina is a system that reasons, disagrees, loops, and knows when to stop.  
+> Mina presents itself as the User Dashboard.**
 
 ---
 
 ## 1. Mina là gì?
 
 **Mina** là một hệ thống AI đa tác tử (multi-agent) được thiết kế để:
-- Tư duy phản biện nội bộ
+- Tư duy phản biện nội bộ và có khả năng phản biện cả User
 - Chấp nhận chuẩn tương đối theo ngữ cảnh
 - Phát hiện và kiểm soát vòng lặp logic
-- Có sự tham gia của con người (*human-in-the-loop*) như một trọng tài
+- Có sự tham gia của con người (*human-in-the-loop*) như một trọng tài, và cũng có thể là một "nhân vật" trong quá trình tư duy phản biện cùng AI – nhưng luôn có **quyền ưu tiên cao nhất**, vì hệ thống xoay quanh User chứ không phải AI
+- Là hệ thống học tập từ dữ liệu quá khứ của cả chính nó và của User
 
 Mục tiêu của Mina **không phải trả lời nhanh**, mà là:
-> **tạo ra reasoning có thể theo dõi, phản biện, chấm điểm và dừng đúng lúc**
+> **tạo ra reasoning có thể theo dõi, phản biện, chấm điểm và dừng đúng lúc;  
+> cho User thấy cái nhìn tổng quan nhất, còn quyết định cuối cùng là ở User.  
+> Hệ thống không quyết định hộ, mà đưa ra đánh giá và bức tranh toàn cảnh.**
 
 ---
 
@@ -27,6 +31,8 @@ Các LLM hiện tại thường gặp các vấn đề:
 - Lặp tư duy nhưng không tự nhận ra
 - Không có bộ nhớ reasoning dài hạn
 - Không biết khi nào nên dừng hoặc nhờ con người can thiệp
+- Không chạy ngầm, không biết khi nào đang "hoạt động", phải nhờ con người tự nhắc
+- Đưa ra thông tin một chiều, thiếu chiều sâu và thiếu bối cảnh lịch sử của User
 
 👉 Mina được xây dựng để **chấp nhận những điểm yếu này là bản chất**,  
 và thiết kế hệ thống **xoay quanh việc kiểm soát chúng**, thay vì che giấu.
@@ -38,35 +44,63 @@ và thiết kế hệ thống **xoay quanh việc kiểm soát chúng**, thay v�
 Mina vận hành dựa trên các trụ cột sau:
 
 ### 3.1 Multi-Agent Reasoning
-- Nhiều agent với vai trò khác nhau
+- Nhiều agent với vai trò khác nhau, trong đó có một agent đặc biệt là **User**
 - Các agent **phản biện lẫn nhau**, không đồng thuận mù quáng
+- User là người đưa ra quyết định cuối cùng, hoặc có thể **ủy quyền** cho một agent khác theo mức độ ưu tiên được thiết kế ban đầu
 
 ### 3.2 Relative Truth (Chuẩn tương đối)
 - Không tồn tại “đúng tuyệt đối”
 - Mỗi kết luận phải gắn với **ngữ cảnh + giả định**
+- Hệ thống và cả User cần hiểu lựa chọn đó đánh đổi gì: **lợi ích, rủi ro, và cái giá phải trả**
 
 ### 3.3 Loop Awareness & Control
+
+**Khi không có User can thiệp trực tiếp (No User mode):**
+
 - Phát hiện vòng lặp suy luận
 - Có cơ chế:
-  - giảm độ ưu tiên
-  - thay đổi chiến lược
-  - hoặc dừng hẳn
+  - giảm độ ưu tiên của chiến lược/agent đang lặp
+  - thay đổi chiến lược suy luận
+  - hoặc dừng hẳn vòng suy luận
+
+**Khi có User tham gia đối thoại (Yes User mode):**
+
+- Vẫn phát hiện vòng lặp, nhưng:
+  - Các agent khởi đầu với mức ưu tiên tương đương
+  - Ưu tiên được tăng/giảm qua từng vòng đối thoại với User dựa trên chất lượng reasoning
+  - Có thể thay đổi chiến lược, gợi ý hướng suy nghĩ mới cho User
+  - Có thể tự động chốt hoặc để User tự chốt khi đã đủ thông tin
 
 ### 3.4 Human-in-the-Loop
+
+**No User (tự vận hành):**
+
 - Khi hệ thống bế tắc hoặc mâu thuẫn kéo dài
 - Con người đóng vai trò **trọng tài**, không phải người suy nghĩ thay
 
+**Yes User (User đang tương tác):**
+
+- Khi hệ thống và User cùng thấy bế tắc hoặc mâu thuẫn kéo dài
+- Con người và hệ thống cùng đóng vai trò **trọng tài**, cùng đề xuất lựa chọn tối ưu
+- Nếu User không đồng tình, hệ thống tiếp tục chạy, phản biện và cập nhật đề xuất
 ### 3.5 Memory + Feedback
+
 - Lưu:
   - reasoning
   - mâu thuẫn
   - phản hồi
   - điểm chất lượng tư duy
-- Bộ nhớ này ảnh hưởng trực tiếp tới các vòng suy luận sau
+  - dữ liệu và lịch sử tương tác của người dùng
+  - tư duy và các phản biện của người dùng → cơ sở để tạo ra các **agent ảo** mô phỏng phong cách suy nghĩ của User (khi được User cho phép)
+
+- Bộ nhớ này ảnh hưởng trực tiếp tới các vòng suy luận sau:  
+  hệ thống không chỉ “nhớ thông tin”, mà còn **nhớ cách User suy nghĩ**.
 
 ### 3.6 Creativity as an Escape Mechanism
-- Sáng tạo không phải để “hay”
-- Mà để **thoát khỏi bẫy logic khép kín**
+
+- Sáng tạo không phải để “nghe hay”
+- Mà để **thoát khỏi bẫy logic khép kín** của AI và cả User,  
+  tìm các góc nhìn mới khi mọi hướng suy luận quen thuộc đều bế tắc
 
 ---
 
@@ -90,6 +124,7 @@ Mina được tách rõ giữa **Essence (tư duy)** và **Core (hệ thống)**
   - feedback
   - reasoning score
   - lịch sử mâu thuẫn
+  - dữ liệu người dùng, lịch sử người dùng
 
 ### 4.4 Google Apps Script (GAS)
 - Tự động hóa
@@ -142,4 +177,7 @@ mà tập trung vào:
 Mina **không tuyên bố là “AI đúng”**.  
 Mina chỉ cố gắng trở thành:
 > **một hệ thống biết mình có thể sai,  
-và biết cách xử lý điều đó.**
+biết cách xử lý điều đó,  
+và đủ dũng cảm để chứng minh khi User sai.**
+
+---
