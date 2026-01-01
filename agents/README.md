@@ -1,69 +1,109 @@
 # MINA — Prototype specification (Phase 1)
 
-Mục tiêu Phase 1: có một prototype chạy được mô phỏng multi-agent reasoning, lưu reasoning vào bộ nhớ đơn giản, và thể hiện hai chế độ hành vi No-User / Yes-User để demo ý tưởng.
+Mục tiêu Phase 1: có một prototype chạy được mô phỏng multi-agent reasoning, lưu reasoning vào bộ nhớ đơn giản, và thể hiện hai chế độ hành vi **No-User / Yes-User** để demo ý tưởng.
 
-Scope (Phase 1)
-- Backend nhẹ (Python) chạy dưới dạng CLI / simple API (không cần dashboard xịn)
-- 4 agents mô phỏng: `Mina (Logic)`, `Mila (Thực dụng)`, `Misa (Triết lý)`, `Misa (thấu cảm)` + `User` (agent đặc biệt)
-- Simple memory: file JSON hoặc SQLite để lưu câu hỏi, các bước reasoning, điểm đơn giản, và lịch sử tương tác
-- Loop detection heuristics cơ bản (vòng lặp số lần, hoặc trả lời lặp lại)
-- Human-in-the-loop: cơ chế gọi User khi mâu thuẫn hoặc khi cần chốt quyết định
+> Ghi chú: tài liệu có phần ví dụ flow kéo dài tới Phase 2/3 để minh hoạ cách tranh luận (không mở rộng scope Phase 1).
 
-Out of scope (Phase 1)
-- Google Apps Script (GAS) tích hợp Drive/Docs
-- Frontend dashboard phức tạp (chỉ demo bằng CLI hoặc trang HTML rất đơn giản)
-- Nâng cao chấm điểm reasoning tự động (machine-learned scorers)
+## Scope (Phase 1)
 
-### Agents (Phase 1)
-### Mina Core (blackend): đưa ra tất dữ liệu liên quan đến vấn đề mà User đưa ra. Cho một bức tranh toàn cảnh hết mức có thể, không đưa đáp án chỉ đưa dữ liệu. Có thể chấp thuận Agents khác khi đòi thêm dữ liệu nếu không quy phạm nguyên tắc.
-- `Mina`: Là một người thực tế / logic nó sẽ đưa ra một phương án với dữ liệu ban đầu nó có một cách logic và thực tế nhất cảm xúc bằng không.
-- `Mila`: Và giờ đây nó đã có thêm dữ liệu mà Mina đưa ra phương án và đánh giá phương án của Mina. Luôn ưu tiên lợi ích/hành động trước không quan tâm gì. đồng tình thì thêm dữ liệu cũng cố cho Mina, không đồng tình thêm dữ liệu phản bác và ra một phương án/đáp án.
-- `Misa`: Tiếp Đánh giá phương án của `Mila`, `Mina`. Cái giá cũng luôn luôn ưu tiên lợi ít là gì và lý thuyết khác với thực tế như thế nào suy nghĩ thì sâu xa. Hậu quả sẽ ra sao. Đồng tình thì cũng cố tiếp luận điểm hoặc phương án của agent đó, không đồng tình thêm dữ liệu phản bác và ra một phương án/đáp án.
-- `Mita`: Chính là một biến số Cảm xúc không thể nào biết trước được. Đánh giá phương án của `Mila`, `Mina`, `Misa`. Suy nghỉ cho người dùng có đáng phải đánh đổi không. Hậu quả sẽ ra sao. Đồng tình củng cố cho agent đó bằng dữ liệu mà nó đưa ra, không đồng tình thêm dữ liệu phản bác và ra một phương án/đáp án.
-==> Dừng lại khi còn đúng 1 phương án/đáp án với tất cả đều đồng tình hoặc biến tấu tí của cùng một giải pháp gốc. 
-==> Hiện ra frontend qua màn hình. tất cả các phương án/đáp án cho User xem đồng ý hoặc phản bác
-- `User` (agent đặc biệt): có thể tham gia trực tiếp ở giai đoạn này; 1 đồng ý kết thúc phase; 2 đồng tình không đồng ý với mọi giải cho thêm dữ liệu, 3 phản bác thêm 1 phương án.
+- Backend nhẹ (Python) chạy dưới dạng CLI / simple API (không cần dashboard “xịn”).
+- 4 agents mô phỏng: `Mina (Logic)`, `Mila (Thực dụng)`, `Misa (Triết lý)`, `Mita (Thấu cảm)` + `User` (agent đặc biệt).
+- Simple memory: file JSON hoặc SQLite để lưu câu hỏi, các bước reasoning, điểm đơn giản, và lịch sử tương tác.
+- Loop detection heuristics cơ bản (vòng lặp số lần, hoặc trả lời lặp lại).
+- Human-in-the-loop: cơ chế gọi `User` khi mâu thuẫn hoặc khi cần chốt quyết định.
 
-### Phase 2 (Trường hợp 1:  `User` đồng ý với với 1 phương án nào đó)
-### Mina Core sẽ cho tranh luận tiếp tục Nhưng có thêm một sô chức năng mới, bây giờ các Agents có khả năng từ chối trả lời, đợi câu trả lời của các Agent Khác, đồng suy nghĩ với các Agents khác. Và các Agents khác phải trả lời đc tại sao người dùng không đồng ý, tại sao vẫn chưa vừa ý người dùng, tại sao người dùng lại người dùng đang bắt đầu nghiên về agents kia.
-- `Mina`: Sang bên đây có thể dự liễu mới từ Phase 1, có cả một dữ liệu đầy biến số như người dùng  thêm một cơ hội đưa ra phương án. Nó có thể từ chối trả lời để chờ tới lượt nào đó hoặc đòi Agent trả lời trước.
--`Mila` : là agents mà trả lời thì các chọn của Agent đầu tiền nó sẽ có thêm dữ liệu hoặc không. Nhưng nếu sắp xếp theo quyền lực thì càng xuống càng yếu dần => Mita là Agents là cuối gần như không đặc quyền xịn nữa.
-=> Mọi thứ sẽ lặp lại cho đến khi người dùng chọn đc phương án đúng ý nhất. Hoặc 1 phương án mà cả 4 đứa đồng thuận và bổ trợ cho nhau
+## Out of scope (Phase 1)
 
-One reasoning flow (example)
-User: Nay tao buồn.
-## Phase 1:
-### Mina Core (blackend): đưa ra dữ liệu đang có bài tập chưa làm xong. Trời đang nắng thấy bà cố. Mới sốt xong mấy ngày trước. Tiền đang sắp hết.
-`Mina` : Có khả năng người dùng buồn là do trời nắng hoặc mệt khuyên đi ngủ trưa để tối có sức làm bài tập
-`Mila` : "Hỏi quyền Mina Core" :xem bài tập có nhiều không => Mina có trả lời là "có". À thằng người dùng buồn vì đang có bài tập chất đống khuyên làm bài đi mày. Xong là hết buồn
-`Misa` : Nghĩ sâu xa. Có lẽ thằng này buồn là do lên cơn thôi. Khen nó mấy câu cho hết buồn. Nay chắc trời nắng quá thôi anh ngủ đi tối làm bài tập như Mina nói. Là sáng mai tự hết buồn à. Mila khuyên giờ này làm là không đúng đâu anh đừng nghe không hợp lý.
-`Mita` : Thấu cảm thấy buồn cùng anh vì thế giới này khổ với anh quá. Thôi cố găng đi làm xong bài tập là hết buồn à.
-### Mina Core đánh giá tổng quan. Agents khuyên anh nên làm gì đó bớt buồn đi có thể đi ngủ như Mina và Misa làm bài tập như Mila và Mita
-==> User: Không đồng tình với quyết định nào bên trên. "Buồn là do phân vân nên đi bơi với đám bạn không nhưng mà bài tập còn nhiều quá"
+- Google Apps Script (GAS) tích hợp Drive/Docs.
+- Frontend dashboard phức tạp (chỉ demo bằng CLI hoặc trang HTML rất đơn giản).
+- Nâng cao chấm điểm reasoning tự động (machine-learned scorers).
 
-## Phase 2:
-### Mina Core (blackend): Cho thêm dữ liệu về bài tập rằng rất nhiều bài tập đang chất đống. Gồm nhưng gì những gì cho các Agents đánh giá tiếp
-`Mina` : Thì chối trả lời vì muốn đợi xem Mita đưa gia phương án vì chuyện này liên quan để cảm xúc bạn bè ==> Mina Core đồng ý cho phép Mina trả lời sau Mita.
-`Mila` : Không được vì sau khi xem xét bài tập thì thấy User không đủ khả năng hoàn thành bài tập trong thời hạn deadline.
-Việc đi bơi với bạn bè là không cần thiết. Nhất quyết từ chối
-`Misa` : Tôi nghỉ anh nên hủy kèo đi tôi thấy Mila nói đúng đấy việc với thời gian hiện tại việc anh hoàn toàn khó làm sao bài tập mà không cố gắng
-`Mita` : Hãy lắng nghe trái tim anh đi. Bạn đang đợi anh nên anh cứ thoải mái đi chơi cho đời thêm vui. Bài tập thì cố gắng hết sức là làm xong à
-`Mina` : Tôi cũng nên thấy anh bỏ kèo đi học đi không rớt môn thì toan tối thấy anh đã rớt 2 môn rồi đấy.
-### Mina Core đánh giá tổng quan. Nhiều Agents khuyên anh nên bỏ kèo để đi học vì học đang rất là quan trọng đối với anh.
-==> User: Tôi không đồng ý vì buồi đi chơi này là Crush rủ tôi. Nên tôi muốn đi chơi cân bằng việc học lun.
+## Agents (Phase 1)
 
-## Phase 3:
-### Mina Core: Cho thêm dữ liệu về người mà User crush mấy năm này rồi đây là một trường hợp hiếm có cần phải xem xét kĩ.
-`Mila`: Là người trả lời đầu lúc nãy nên giờ trả lời tiếp. Yêu cầu quyền trả lời cuối cùng vì đang thiếu dữ liệu. Core đồng ý chuyển xuống cuối
-`Misa`: Cũng yêu cầu quyền trả lời cuối vì thiếu dữ liệu. Core từ chối vì lượt này Mila là người trả lời đầu tiền nên quyền mạnh nhất. Cho Misa trả lời trước Mila.
-`Mita`: Hãy anh phải khiến lần đi chơi này đáng nhớ mới được cố gắng tạo ấn tượng tốt với crush. Hãy mang thêm sách vở nữa vì lên đó thì sẽ có người chỉ bài nên học nhanh hơn.
-`Mina`: Không đồng tình với Mita. Không bạn nào đi bơi ngoài user đi bơi mà mang theo sách vở đâu. Việc user mang thêm sách vở còn ảnh hưởng đến người khác. Tôi khuyên thay vì tự chối nên hẹn khi khác đi chơi. Giờ vẫn đầu tư vào học
-`Misa`: Hay bây giờ đơn giản hơn. Kêu crush về nhà dạy học cho user sẽ tốt hơn nhanh hơn nếu tốt sẽ vẫn còn thời gian đi bơi.
-`Mila`: Cách tối nhất bây giờ user nên đi bơi với Crush đi nhưng đi chơi ít lại thôi khoảng 3 tiếng là xin về sớm có việc. Khoảng thời gian còn lại vẫn đủ nếu user thức đêm ôn bài. Vì thực tế cho thấy trong database user cũng đã làm đc điểu tương tự với cách này và thành công
-==> User đồng ý với cách Mila. 
-==> Kết thúc
+### Mina Core (backend)
+
+`Mina Core` đưa ra **tất cả dữ liệu liên quan** đến vấn đề mà `User` đưa ra, nhằm cho một bức tranh toàn cảnh tối đa có thể. Core **không đưa đáp án**, chỉ đưa dữ liệu. Core có thể chấp thuận yêu cầu “đòi thêm dữ liệu” từ các agent khác nếu không vi phạm nguyên tắc.
+
+### Vai trò từng agent
+
+- `Mina`: thực tế/logic; đề xuất phương án dựa trên dữ liệu ban đầu; cảm xúc bằng không.
+- `Mila`: dựa trên dữ liệu từ `Mina Core` để đánh giá phương án của `Mina`; ưu tiên lợi ích/hành động trước. Nếu đồng tình thì bổ sung dữ liệu củng cố; nếu không đồng tình thì phản bác và đưa ra một phương án/đáp án.
+- `Misa`: đánh giá phương án của `Mila` và `Mina`; ưu tiên “lợi ích” và khoảng cách giữa lý thuyết với thực tế; suy nghĩ sâu hơn về hậu quả. Nếu đồng tình thì củng cố luận điểm/phương án; nếu không đồng tình thì phản bác và đưa ra một phương án/đáp án.
+- `Mita`: biến số về cảm xúc; đánh giá phương án của `Mila`, `Mina`, `Misa`; cân nhắc góc nhìn người dùng và cái giá phải đánh đổi/hậu quả. Nếu đồng tình thì củng cố bằng dữ liệu; nếu không đồng tình thì phản bác và đưa ra một phương án/đáp án.
+
+**Điều kiện dừng**
+
+- Dừng khi chỉ còn đúng **1 phương án/đáp án**: tất cả đều đồng tình (hoặc cùng biến tấu từ một giải pháp gốc).
+- Hiển thị “frontend” qua màn hình: liệt kê các phương án/đáp án cho `User` xem để đồng ý hoặc phản bác.
+
+### `User` (agent đặc biệt)
+
+`User` có thể tham gia trực tiếp ở giai đoạn này:
+
+- (1) Đồng ý → kết thúc phase.
+- (2) Không đồng ý với mọi giải pháp → cung cấp thêm dữ liệu.
+- (3) Phản bác và đưa thêm 1 phương án.
+
+## Phase 2 (trường hợp: `User` đồng ý với 1 phương án)
+
+`Mina Core` cho tranh luận tiếp tục, nhưng có thêm một số chức năng mới:
+
+- Agents có thể **từ chối trả lời**, chờ câu trả lời của agents khác, hoặc đồng suy nghĩ.
+- Các agents phải trả lời được: vì sao người dùng không đồng ý, vì sao vẫn chưa vừa ý, và vì sao người dùng đang bắt đầu nghiêng về agent kia.
+
+Ví dụ mô tả vai trò:
+
+- `Mina`: có thể dùng dữ liệu mới từ Phase 1; có nhiều biến số do người dùng bổ sung nên có cơ hội đưa ra phương án khác. Có thể từ chối trả lời để chờ lượt hoặc yêu cầu agent khác trả lời trước.
+- `Mila`: khi trả lời, lựa chọn của agent ở lượt đầu tiên có thể thêm dữ liệu hoặc không. Nếu sắp xếp theo “quyền lực” thì càng về sau càng yếu dần → `Mita` là agent cuối, gần như không còn “đặc quyền”.
+
+Mọi thứ lặp lại cho đến khi người dùng chọn được phương án đúng ý nhất, hoặc có 1 phương án mà cả 4 agent đồng thuận và bổ trợ cho nhau.
+
+## One reasoning flow (example)
+
+**User:** “Nay tao buồn.”
+
+### Phase 1
+
+**Mina Core (backend):** đưa ra dữ liệu đang có: bài tập chưa làm xong; trời đang rất nắng; mới sốt xong mấy ngày trước; tiền sắp hết.
+
+- `Mina`: có khả năng người dùng buồn là do trời nắng hoặc mệt → khuyên đi ngủ trưa để tối có sức làm bài tập.
+- `Mila`: “hỏi quyền Mina Core” xem bài tập có nhiều không → `Mina Core` trả lời “có”. Kết luận người dùng buồn vì bài tập chất đống → khuyên làm bài, xong là hết buồn.
+- `Misa`: nghĩ sâu xa; có thể buồn do “lên cơn”/tâm lý; khen vài câu cho hết buồn; đề xuất ngủ trưa như `Mina`, tối làm bài. Phản biện việc “giờ này làm” theo `Mila` là không hợp lý.
+- `Mita`: thấu cảm; khuyên cố gắng làm xong bài tập để bớt buồn.
+
+**Mina Core tổng hợp:** các agent gợi ý bớt buồn bằng cách ngủ trưa (`Mina`, `Misa`) hoặc làm bài tập (`Mila`, `Mita`).
+
+**User phản hồi:** không đồng tình quyết định nào bên trên: “Buồn là do phân vân nên đi bơi với đám bạn không nhưng mà bài tập còn nhiều quá.”
+
+### Phase 2
+
+**Mina Core (backend):** bổ sung dữ liệu: bài tập rất nhiều, đang chất đống (để các agent đánh giá tiếp).
+
+- `Mina`: từ chối trả lời để đợi xem `Mita` đưa phương án vì chuyện này liên quan đến cảm xúc/bạn bè → `Mina Core` đồng ý cho phép `Mina` trả lời sau `Mita`.
+- `Mila`: không đồng ý vì sau khi xem xét bài tập thì `User` không đủ khả năng hoàn thành trước deadline. Việc đi bơi với bạn bè là không cần thiết → nhất quyết từ chối.
+- `Misa`: “tôi nghĩ” nên huỷ kèo; với thời gian hiện tại, nếu không cố gắng thì rất khó xử lý bài tập.
+- `Mita`: hãy lắng nghe trái tim; bạn đang đợi; cứ thoải mái đi chơi cho đời vui. Bài tập thì cố gắng hết sức sẽ xong.
+- `Mina`: cũng nghiêng về việc bỏ kèo để đi học; nếu rớt môn thì “toang” (vì thấy đã rớt 2 môn).
+
+**Mina Core tổng hợp:** nhiều agent khuyên bỏ kèo để đi học vì việc học đang quan trọng.
+
+**User phản hồi:** không đồng ý vì buổi đi chơi này là crush rủ; muốn đi chơi để cân bằng việc học.
+
+### Phase 3
+
+**Mina Core (backend):** bổ sung dữ liệu về người mà `User` crush mấy năm; đây là trường hợp hiếm có cần xem xét kỹ.
+
+- `Mila`: đã trả lời đầu ở lượt trước nên giờ trả lời tiếp; yêu cầu quyền trả lời cuối vì đang thiếu dữ liệu → Core đồng ý chuyển xuống cuối.
+- `Misa`: cũng yêu cầu quyền trả lời cuối vì thiếu dữ liệu → Core từ chối vì lượt này `Mila` là người trả lời đầu tiên nên quyền mạnh nhất; cho `Misa` trả lời trước `Mila`.
+- `Mita`: lần đi chơi này phải đáng nhớ; cố gắng tạo ấn tượng tốt với crush. Gợi ý mang thêm sách vở vì lên đó có thể có người chỉ bài nên học nhanh hơn.
+- `Mina`: không đồng tình với `Mita`: không ai đi bơi mà mang sách vở; mang sách có thể ảnh hưởng người khác. Khuyên hẹn khi khác đi chơi; giờ vẫn đầu tư vào học.
+- `Misa`: đề xuất đơn giản hơn: rủ crush về nhà dạy học cho `User`; nếu tốt thì vẫn còn thời gian đi bơi.
+- `Mila`: phương án tối ưu: `User` đi bơi với crush nhưng rút ngắn (khoảng 3 tiếng) rồi xin về sớm “có việc”; thời gian còn lại vẫn đủ nếu thức đêm ôn bài. Thực tế trong database, `User` đã làm tương tự và thành công.
+
+**Kết quả:** `User` đồng ý với cách của `Mila` → kết thúc.
 
 ## Một số chức năng ngoài lề
-- Có mức độ yêu thích của user về Agents. Nếu User đồng ý với ý kiến của Agents càng nhiều thì điểm ưu thích cảng cao. Nó có thể đẩy Agents phản biện đầu tiên hoặc cuối cùng ở Phase 1. Đây là dữ liệu quan trọng mà các Agents không bao giờ đc biết
-- Agents (đặc biệt): là User Proxy nó sẽ chọn mà nó nghĩ User hay chọn nhất nhưng nó không có quyền tranh luận nếu nó không đồng ý quá Phase 2 thì gọi user ra chọn dùm.
+
+- Có “mức độ yêu thích” của `User` với agents. Nếu `User` đồng ý ý kiến của agent càng nhiều thì điểm ưu thích càng cao; điểm này có thể đẩy agent phản biện đầu tiên hoặc cuối cùng ở Phase 1. Đây là dữ liệu quan trọng mà các agents không bao giờ được biết.
+- Agent (đặc biệt): `User Proxy` — chọn phương án mà nó nghĩ `User` hay chọn nhất; không có quyền tranh luận. Nếu nó không đồng ý quá Phase 2 thì gọi `User` ra chọn.
 
