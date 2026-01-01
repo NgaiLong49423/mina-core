@@ -4,6 +4,19 @@ Mục tiêu Phase 1: có một prototype chạy được mô phỏng multi-agent
 
 > Ghi chú: tài liệu có phần ví dụ flow kéo dài tới Phase 2/3 để minh hoạ cách tranh luận (không mở rộng scope Phase 1).
 
+## Executive summary
+
+MINA là prototype multi-agent phục vụ để minh họa quy trình tranh luận/đề xuất giữa nhiều agent với `User` trong vòng lặp reasoning đơn giản; Phase 1 tập trung vào bản chạy nhẹ (CLI/API), lưu trữ reasoning và cơ chế human-in-the-loop.
+
+## Table of contents
+
+- [Scope (Phase 1)](#scope-phase-1)
+- [Out of scope (Phase 1)](#out-of-scope-phase-1)
+- [Agents (Phase 1)](#agents-phase-1)
+- [Phase 2](#phase-2-trường-hợp-user-đồng-ý-với-1-phương-án)
+- [One reasoning flow (example)](#one-reasoning-flow-example)
+- [Một số chức năng ngoài lề](#một-số-chức-năng-ngoài-lề)
+
 ## Scope (Phase 1)
 
 - Backend nhẹ (Python) chạy dưới dạng CLI / simple API (không cần dashboard “xịn”).
@@ -26,10 +39,12 @@ Mục tiêu Phase 1: có một prototype chạy được mô phỏng multi-agent
 
 ### Vai trò từng agent
 
-- `Mina`: thực tế/logic; đề xuất phương án dựa trên dữ liệu ban đầu; cảm xúc bằng không.
-- `Mila`: dựa trên dữ liệu từ `Mina Core` để đánh giá phương án của `Mina`; ưu tiên lợi ích/hành động trước. Nếu đồng tình thì bổ sung dữ liệu củng cố; nếu không đồng tình thì phản bác và đưa ra một phương án/đáp án.
-- `Misa`: đánh giá phương án của `Mila` và `Mina`; ưu tiên “lợi ích” và khoảng cách giữa lý thuyết với thực tế; suy nghĩ sâu hơn về hậu quả. Nếu đồng tình thì củng cố luận điểm/phương án; nếu không đồng tình thì phản bác và đưa ra một phương án/đáp án.
-- `Mita`: biến số về cảm xúc; đánh giá phương án của `Mila`, `Mina`, `Misa`; cân nhắc góc nhìn người dùng và cái giá phải đánh đổi/hậu quả. Nếu đồng tình thì củng cố bằng dữ liệu; nếu không đồng tình thì phản bác và đưa ra một phương án/đáp án.
+| Agent  |      Vai trò          | Hành vi điển hình |
+|--------|-----------------------|---|
+| `Mina` | Thực tế / logic       | Đề xuất phương án dựa trên dữ liệu ban đầu; cảm xúc bằng không. |
+| `Mila` | Thực dụng / hành động | Đánh giá phương án, ưu tiên lợi ích và hành động; nếu đồng tình thì củng cố, nếu không thì phản biện và đề xuất phương án thay thế. |
+| `Misa` | Triết lý / hậu quả    | Phân tích sâu về hậu quả, khác biệt giữa lý thuyết và thực tế; củng cố hoặc phản bác dựa trên phân tích. |
+| `Mita` | Thấu cảm / cảm xúc    | Đánh giá góc nhìn cảm xúc của người dùng; cân nhắc cái giá phải trả và hậu quả cảm xúc. |
 
 **Điều kiện dừng**
 
