@@ -1,0 +1,284 @@
+Mina-core — Lộ trình học để tự hoàn thành dự án
+
+Mục tiêu: Từ sinh viên năm 1–2 (mới biết C và Java OOP) đến mức có thể:
+- Hiểu code hiện tại trong mina-core.
+- Tự viết / chỉnh sửa backend Python đơn giản.
+- Thiết kế và implement module Memory (file/SQLite) + API HTTP cơ bản.
+- Từng bước xây được prototype multi-agent reasoning như tài liệu mô tả.
+
+Thái độ quan trọng hơn tốc độ: đi chậm, chắc, làm được bài tập nhỏ.
+Thời gian gợi ý: 6–9 tháng nếu học đều (không cần vội).
+
+=================================================
+0. Điểm xuất phát hiện tại (YOU NOW)
+=================================================
+
+Bạn đã có:
+- C cơ bản → hiểu biến, hàm, if/else, vòng lặp, pointer sơ sơ.
+- Java OOP → class, object, kế thừa, có tư duy hướng đối tượng.
+- Biết copy code và chạy được (rất quan trọng, đừng xem thường).
+
+Thiếu (cần bù dần):
+- Python (ngôn ngữ chính của mina-core).
+- HTTP, API, JSON, server backend.
+- Database (SQLite/Postgres) + SQL cơ bản.
+- Git/GitHub, testing, cách tổ chức project.
+- Kiến trúc system + tư duy multi-agent như docs của Mina.
+
+Lộ trình bên dưới: mỗi giai đoạn bạn có thể kéo dài/thu ngắn tùy lịch học.
+
+=================================================
+1. Nền tảng công cụ & thói quen (1–2 tuần)
+=================================================
+
+Mục tiêu: Biết dùng công cụ căn bản để không bị "kẹt" bởi mấy lỗi lặt vặt.
+
+1.1. Git & GitHub
+- Cài Git.
+- Học các lệnh cơ bản: git init, git status, git add, git commit, git log.
+- Tạo repo riêng (có thể private) cho các bài tập nhỏ của bạn.
+
+1.2. Terminal / PowerShell
+- Làm quen với:
+  - cd, ls/dir, mkdir, rm, mv.
+  - Chạy python, pip, venv.
+- Hiểu khái niệm "current working directory".
+
+1.3. Đọc tài liệu tiếng Anh
+- Thói quen: luôn mở docs chính thức (Python, FastAPI, SQLite...) và đọc từ từ.
+- Không cần hiểu 100%, chỉ cần nắm ví dụ code và từ khóa.
+
+=================================================
+2. Python cơ bản đến OOP (3–5 tuần)
+=================================================
+
+Mục tiêu: Có thể đọc/viết Python như bạn đang làm với C/Java đơn giản.
+
+2.1. Ngôn ngữ
+- Cấu trúc cơ bản: biến, kiểu dữ liệu (int, float, str, list, dict), if, for, while.
+- Hàm (def), tham số, return.
+- List, dict, set, tuple — cách duyệt, thêm/xóa.
+
+2.2. OOP trong Python
+- class, __init__, self, method.
+- Tạo vài class đơn giản: Student, Course, Task.
+- Kế thừa (inheritance) + override method.
+
+2.3. Modules & package
+- Cách tách code ra nhiều file .py và import lẫn nhau.
+- Hiểu ý nghĩa của if __name__ == "__main__": trong backend/main.py.
+
+2.4. Bài tập nhỏ gợi ý
+- Viết chương trình quản lý todo list (CLI) lưu vào file .json.
+- Viết chương trình đọc file .txt và đếm số từ.
+
+Khi nào coi như xong phase này?
+- Nhìn file backend/main.py hiện tại và hiểu được 80–90%.
+- Tự viết được script Python ~100–200 dòng mà không sợ.
+
+=================================================
+3. HTTP, API và backend Python (3–5 tuần)
+=================================================
+
+Mục tiêu: Hiểu HTTP ở mức đủ dùng, viết được API nhỏ.
+
+3.1. Kiến thức HTTP
+- Khái niệm: request, response, method (GET/POST), status code (200, 404...).
+- Headers, body, JSON.
+- Dùng trình duyệt, curl hoặc Postman để gọi API.
+
+3.2. Backend Python level 1
+- Bắt đầu với http.server (như backend/main.py) để hiểu nguyên lý.
+- Sau đó học một framework nhẹ (khuyên: FastAPI) để code dễ hơn.
+  - Route: GET /health, GET /items, POST /items.
+  - Kiểu dữ liệu request/response (pydantic model nếu dùng FastAPI).
+
+3.3. Bài tập gợi ý
+- Viết API:
+  - GET /ping → trả {"pong": true}.
+  - POST /echo → nhận JSON rồi trả lại đúng y chang.
+- Thêm /health cho một server tự viết.
+
+Khi nào xong?
+- Bạn có thể đọc QUICKSTART.md và tự chạy server.
+- Bạn có thể sửa backend/main.py để thêm 1 endpoint mới đơn giản.
+
+=================================================
+4. Database & Memory (SQLite) (4–6 tuần)
+=================================================
+
+Mục tiêu: Lưu reasoning/entry xuống database thay vì chỉ file.
+
+4.1. SQL căn bản
+- Làm quen SQLite trước (cài sqlite3, dùng CLI hoặc tool GUI như DBeaver).
+- Cú pháp cơ bản:
+  - CREATE TABLE, INSERT, SELECT, UPDATE, DELETE.
+  - WHERE, ORDER BY, LIMIT.
+
+4.2. Thiết kế bảng cho Memory
+Dựa trên schema trong memory/README.md, thiết kế bảng ví dụ:
+- memory_entries(
+    id TEXT PRIMARY KEY,
+    request_id TEXT,
+    session_id TEXT,
+    user_id TEXT,
+    agent_id TEXT,
+    timestamp TEXT,
+    short_answer TEXT,
+    reasoning TEXT,
+    confidence REAL,
+    tags TEXT,
+    conflict_flags TEXT,
+    loop_flag INTEGER,
+    provenance TEXT,
+    user_feedback TEXT
+  );
+
+4.3. Kết nối Python + SQLite
+- Dùng module sqlite3 trong Python.
+- Viết hàm:
+  - init_db() để tạo bảng nếu chưa có.
+  - save_entry(entry_dict).
+  - query_by_session(session_id, limit).
+
+4.4. Bài tập gợi ý
+- Chuyển ví dụ file-based trong memory/README.md sang dùng SQLite.
+- Viết script:
+  - python tools/demo_memory.py → insert 2–3 entry demo, rồi query và in ra.
+
+=================================================
+5. Testing, cấu trúc project & quality (2–4 tuần)
+=================================================
+
+Mục tiêu: Không chỉ "chạy được" mà còn tự tin sửa code mà không sợ hỏng.
+
+5.1. pytest cơ bản
+- Cài pytest.
+- Viết test cho:
+  - Hàm đơn giản (cộng, trừ, xử lý string).
+  - Hàm save_entry và query_by_session.
+
+5.2. Cấu trúc project Python
+- Học cách tổ chức project:
+  - src/ hoặc package chính.
+  - tests/ chứa test.
+- Hiểu requirements.txt, virtualenv.
+
+5.3. Áp dụng vào mina-core (từng chút)
+- Viết 1–2 test đơn giản cho backend (test /health).
+- Thêm script nhỏ để test module memory.
+
+=================================================
+6. Kiến trúc & multi-agent reasoning (4–8 tuần)
+=================================================
+
+Mục tiêu: Hiểu và mô phỏng được core logic "nhiều agent tranh luận" như docs.
+
+6.1. Đọc lại docs/architecture.md
+- Tóm tắt lại bằng lời của chính bạn:
+  - Vai trò Mina, Mila, Misa, Mita.
+  - Phase 1 vs Phase 2.
+  - Điều kiện dừng, human-in-the-loop.
+
+6.2. Mô phỏng offline (không cần LLM)
+- Tạo các class Python:
+  - BaseAgent, MinaAgent, MilaAgent, MisaAgent, MitaAgent.
+- Cho mỗi agent nhận vào context (dict) và trả về proposal (text + score).
+- Viết MinaCore đơn giản:
+  - Nhận câu hỏi text.
+  - Gửi cho từng agent (gọi method think()).
+  - Thu kết quả, log vào memory (SQLite hoặc file).
+
+6.3. Loop control & conflict flags (simple)
+- Đặt rule rất đơn giản:
+  - Nếu số vòng > N thì dừng.
+  - Nếu cùng một agent lặp lại y chang câu trả lời → set loop_flag.
+- Log conflict_flags nếu 2 agent trả lời mâu thuẫn rõ ràng.
+
+6.4. Demo CLI
+- Viết chương trình CLI:
+  - Nhập câu hỏi từ user.
+  - Chạy 1–2 vòng reasoning.
+  - In ra các proposal + tóm tắt cuối.
+
+=================================================
+7. LLM & tích hợp API (tùy thời điểm, 4–8 tuần)
+=================================================
+
+Mục tiêu: Biết gọi API LLM (OpenAI hoặc tương đương) để thay thế một phần logic cứng.
+
+7.1. Khái niệm cơ bản
+- Prompt, completion, temperature, max_tokens.
+- Context window, token.
+
+7.2. Gọi API từ Python
+- Dùng thư viện chính thức (ví dụ: openai hoặc client khác tùy provider).
+- Học cách đọc key từ biến môi trường (.env), không hard-code secret.
+
+7.3. Tích hợp vào agents
+- Mỗi agent class có thể gọi LLM với prompt khác nhau (persona khác nhau).
+- Vẫn giữ Core là nơi quyết định dừng/loop/human-in-the-loop.
+
+7.4. Bảo mật cơ bản
+- Không log secret.
+- Không commit file .env lên Git.
+
+=================================================
+8. Map kỹ năng → task cụ thể trong mina-core
+=================================================
+
+Khi bạn đã qua các phase trên (dù chưa giỏi, chỉ cần "làm được"), bạn có thể:
+
+Milestone 1 — Hiểu & chỉnh server hiện tại
+- Đọc backend/main.py, hiểu từng dòng.
+- Thêm endpoint mới, ví dụ: GET /version trả JSON với version và status.
+
+Milestone 2 — Implement Memory file-based chuẩn hơn
+- Dùng code mẫu trong memory/README.md.
+- Tách thành module riêng (ví dụ: memory/file_store.py).
+- Viết hàm để lưu một entry đúng với schema gợi ý.
+
+Milestone 3 — Chuyển Memory sang SQLite
+- Tạo module memory/sqlite_store.py.
+- Định nghĩa bảng, viết CRUD cơ bản.
+- Viết test nhỏ cho store/query.
+
+Milestone 4 — API nhỏ cho Memory
+- Tạo backend API:
+  - POST /memory/store → gọi sqlite_store.save_entry.
+  - GET /memory/query → trả list entry theo session_id.
+
+Milestone 5 — Core reasoning prototype không dùng LLM
+- Implement các agent Mina/Mila/Misa/Mita với rule cứng (if/else).
+- Viết MinaCore nhận input, gọi agents, lưu vào Memory.
+- Viết CLI demo và/hoặc API /query.
+
+Milestone 6 — Thử tích hợp LLM
+- Chọn 1–2 agent dùng LLM (ví dụ: Misa, Mita).
+- Giữ lại toàn bộ logging vào Memory để dễ debug.
+
+=================================================
+9. Cách học hằng ngày / hàng tuần
+=================================================
+
+Gợi ý nhịp học:
+- Mỗi ngày: 1–2 giờ code + 30 phút đọc docs/ghi chú.
+- Mỗi tuần: chọn 1 mini-project nhỏ liên quan đến Mina (ví dụ: thêm endpoint, thêm hàm memory, viết 1 test).
+
+Tips:
+- Đừng cố "nhảy thẳng" vào multi-agent phức tạp khi Python/HTTP/DB còn yếu.
+- Luôn giữ 1 file ghi log học tập: hôm nay học gì, mai làm tiếp gì.
+- Luôn commit code sau mỗi tiến bộ nhỏ (git commit với message rõ ràng).
+
+=================================================
+10. Kết
+=================================================
+
+Bạn không cần trở thành "senior engineer" để tự hoàn thành bản prototype Mina.
+Bạn chỉ cần:
+- Nắm chắc Python cơ bản + HTTP + SQLite.
+- Biết tổ chức code gọn gàng, có test đơn giản.
+- Dám thử, dám refactor, không sợ code xấu lúc đầu.
+
+Nếu bạn muốn, hãy đánh dấu trạng thái hiện tại (ví dụ: đang ở phase 2 Python cơ bản) rồi cập nhật file này sau mỗi khi hoàn thành 1 phase hoặc milestone.
+
