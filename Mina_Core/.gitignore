@@ -1,0 +1,11 @@
+# Giấu các file chìa khóa bí mật (CỰC KỲ QUAN TRỌNG)
+secrets/
+.env
+# Giấu các file rác của Python và hệ thống
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+.vscode/
+.DS_Store
