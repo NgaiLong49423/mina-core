@@ -1,0 +1,8 @@
+# No third-party runtime requirements currently; uses Python standard library only.
+# If you add external packages, list them here, e.g.:
+# python-dotenv==0.21.0
+# fastapi==0.100.0
+# uvicorn==0.22.0
+
+# Recommended Python version:
+# python>=3.10
