@@ -3,23 +3,25 @@ import os
 os.environ['GRPC_VERBOSITY'] = 'ERROR'
 os.environ['GLOG_minloglevel'] = '2'
 
-import os.path
 import io
 import google.generativeai as genai
-from google.oauth2.credentials import Credentials
-from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 
-# 1. Cấu hình AI (Dán lại mã API của bạn)
-GEMINI_API_KEY = "DÁN_LẠI_MÃ_API_CỦA_BẠN_VÀO_ĐÂY"
+try:
+    # Khi chạy dưới dạng package: python -m Mina_Core.mina_system
+    from .drive_auth import get_drive_service
+except ImportError:  # fallback khi chạy trực tiếp trong thư mục Mina_Core
+    from drive_auth import get_drive_service  # type: ignore
+
+# 1. Cấu hình AI (đọc API key từ biến môi trường, không hard-code)
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+if not GEMINI_API_KEY:
+    raise RuntimeError(
+        "Thiếu biến môi trường GEMINI_API_KEY. Hãy đặt key trước khi chạy Mina Core."
+    )
+
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
-
-SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
-
-def get_drive_service():
-    creds = Credentials.from_authorized_user_file('token.json', SCOPES)
-    return build('drive', 'v3', credentials=creds)
 
 def read_file_content(service, file_id):
     request = service.files().get_media(fileId=file_id)

@@ -1,19 +1,14 @@
-import os.path
 import io
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
+try:
+    # Khi chạy dưới dạng package: python -m Mina_Core.mina_reader
+    from .drive_auth import get_drive_service
+except ImportError:  # fallback khi chạy trực tiếp trong thư mục Mina_Core
+    from drive_auth import get_drive_service  # type: ignore
 
-SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 
 def main():
-    creds = None
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
-    
-    service = build('drive', 'v3', credentials=creds)
+    service = get_drive_service()
 
     print("\n--- MINA CORE: ĐANG TRUY XUẤT NỘI DUNG ---")
 
