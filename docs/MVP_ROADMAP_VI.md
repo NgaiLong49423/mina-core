@@ -1,266 +1,280 @@
-# Lộ trình học (Roadmap) & Yêu cầu MVP (Minimum Viable Product) – Tiếng Việt
+# Lộ trình học tập & MVP (Việt ngữ) cho **hệ thống suy luận đa tác tử (multi-agent)** bằng Python
 
-> **Mục tiêu tài liệu này**: Cung cấp **lộ trình học Mina** theo từng giai đoạn và một **bộ yêu cầu MVP** (Minimum Viable Product – *phiên bản sản phẩm tối thiểu có thể chạy được*) để bạn có thể đóng góp/triển khai tính năng trong hệ sinh thái Mina một cách thực tế.
->
-> **Đối tượng**: Người đã có nền tảng lập trình (ưu tiên OCaml/Rust/Typescript) và muốn hiểu Mina từ góc nhìn kỹ thuật (node, protocol, zk, tooling).
-
----
-
-## 1) Tổng quan: Mina là gì (theo góc nhìn kỹ thuật)
-
-- **Mina Protocol** là blockchain tập trung vào **zero-knowledge** (bằng chứng không tiết lộ – *chứng minh một điều đúng mà không lộ dữ liệu gốc*), đặc biệt là **zk-SNARKs** (*bằng chứng ngắn gọn, dễ kiểm tra, không tiết lộ*).
-- Mina có kiến trúc dùng **SNARK** để giữ trạng thái chuỗi “nhẹ” hơn, và dùng **Proof-of-Stake** (bằng chứng cổ phần – *chọn người tạo block dựa trên lượng stake*) cho đồng thuận.
-
-**Thuật ngữ nhanh**:
-- **Node** (nút mạng): máy chạy phần mềm Mina, tham gia P2P.
-- **P2P** (peer-to-peer – *mạng ngang hàng*): các node giao tiếp trực tiếp.
-- **Ledger** (sổ cái): trạng thái tài khoản/balances.
-- **Consensus** (đồng thuận): cơ chế chọn chain hợp lệ (Mina dùng Ouroboros Samasika – biến thể PoS).
-- **Mempool** (bể giao dịch): nơi node giữ giao dịch chưa vào block.
-- **RPC** (Remote Procedure Call – *gọi hàm từ xa*): API để wallet/ứng dụng giao tiếp với node.
+> Tài liệu này **thay thế hoàn toàn** mọi nội dung liên quan Mina blockchain/node trước đây.  
+> Mục tiêu: mô tả **lộ trình học tập** và **yêu cầu MVP** cho repo được định vị như một **hệ thống suy luận đa tác tử** có **nhận biết vòng lặp (loop awareness)**, **phân xử có người trong vòng lặp (human-in-the-loop arbitration)** và **bộ nhớ suy luận dài hạn (long-term reasoning memory)**.
 
 ---
 
-## 2) Lộ trình học theo giai đoạn
+## 1) Tầm nhìn sản phẩm (Product Vision)
+Xây dựng một framework/ứng dụng Python cho phép nhiều tác tử (agent = “tác nhân phần mềm” có thể lập kế hoạch và hành động) phối hợp để giải bài toán, trong đó:
 
-### Giai đoạn 0 — Chuẩn bị nền tảng
+- **Loop awareness (nhận biết vòng lặp)**: hệ thống phát hiện khi agent đang lặp lại cùng một chu kỳ hành động/suy nghĩ (ví dụ: hỏi–đáp vòng tròn, gọi tool thất bại lặp lại) và tự áp dụng chiến lược thoát vòng lặp.
+- **Human-in-the-loop arbitration (phân xử có người tham gia)**: khi các agent bất đồng hoặc độ tin cậy thấp, hệ thống tạm dừng và xin quyết định/ưu tiên từ người dùng (arbitration = “phân xử/ra quyết định cuối”).
+- **Long-term reasoning memory (bộ nhớ suy luận dài hạn)**: lưu trữ bền vững các sự kiện, quyết định, ngữ cảnh dự án… để tái sử dụng qua nhiều phiên (session), tránh “mất trí nhớ” khi chạy lại.
 
-**Mục tiêu**: đủ nền để đọc code, build, debug.
-
-- Học/ôn:
-  - **Linux + networking** (TCP/UDP, DNS, ports).
-  - **Git** (branch, rebase, commit conventions).
-  - **Docker** (container – *đóng gói môi trường chạy*): để tái lập môi trường.
-  - **OCaml** (ngôn ngữ chính trong mina-core): syntax cơ bản, module system, dune.
-- Kỹ năng:
-  - Build dự án, chạy test, đọc log.
-  - Dùng **Grafana/Prometheus** (giám sát – *quan sát metrics*) nếu repo có.
-
-**Kết quả cần đạt**:
-- Build được project từ source và chạy được ít nhất 1 binary/node mode (nếu dự án hỗ trợ).
+Kết quả mong muốn: một MVP chạy được end-to-end, có giám sát vòng lặp, có cơ chế xin phán quyết của người, và có bộ nhớ dài hạn đủ dùng.
 
 ---
 
-### Giai đoạn 1 — Hiểu cấu trúc repo & luồng chạy node
+## 2) Người dùng mục tiêu & use-cases
+### 2.1 Persona
+- **Dev/Researcher** muốn thử nghiệm kiến trúc multi-agent có kiểm soát vòng lặp.
+- **PM/Operator** muốn ủy quyền tác vụ (điều tra lỗi, viết tài liệu, tạo PR) nhưng cần can thiệp khi hệ thống không chắc.
 
-**Mục tiêu**: biết code nằm ở đâu, data đi qua những module nào.
-
-- Đọc:
-  - README, docs nội bộ.
-  - Cấu trúc thư mục `src/`, `docs/`, `scripts/`.
-- Hiểu luồng:
-  - Startup: parse config → init logger → init network → sync chain → start producing/validating.
-  - **Config** (cấu hình): file/flags quyết định node chạy ra sao.
-
-**Bài tập đề xuất**:
-- Tìm các điểm vào chương trình (main entrypoints).
-- Chạy node ở chế độ “connect/testnet” (nếu có) hoặc “sandbox/devnet” (mạng dev – *mạng thử nghiệm nội bộ*).
+### 2.2 Use-cases MVP (tối thiểu)
+1. **Tìm hiểu codebase & trả lời câu hỏi**: agent đọc repo, tóm tắt module, trả lời “file này làm gì?”.
+2. **Tạo kế hoạch thay đổi nhỏ**: agent đề xuất các bước sửa lỗi/viết test.
+3. **Thực thi công cụ (tool use)**: chạy lệnh giả lập hoặc gọi API nội bộ (trong MVP có thể mock).
+4. **Tranh luận giữa agent**: ít nhất 2 agent đưa ra phương án khác nhau và có cơ chế chọn.
+5. **Xin phân xử từ người dùng**: khi bế tắc/không chắc, hệ thống hỏi người dùng chọn A/B.
+6. **Nhớ quyết định**: lựa chọn của người dùng được ghi vào bộ nhớ và áp dụng về sau.
 
 ---
 
-### Giai đoạn 2 — Consensus, block, ledger và mempool
+## 3) Kiến trúc tổng quan (High-level Architecture)
+### 3.1 Thành phần chính
+- **Orchestrator (bộ điều phối)**: quản lý vòng đời phiên làm việc, phân công nhiệm vụ, gom kết quả.
+- **Agent**: mỗi agent có vai trò (role) riêng, ví dụ:
+  - **Planner agent** (lập kế hoạch)
+  - **Critic agent** (phê bình/đánh giá)
+  - **Executor agent** (thực thi tool)
+- **Tooling layer (lớp công cụ)**: các “tool” mà agent có thể gọi (VD: đọc file, tìm kiếm, chạy test). MVP có thể dùng tool giả lập (mock) trước.
+- **Memory subsystem (hệ bộ nhớ)**:
+  - **Short-term memory** (ngắn hạn): trạng thái hội thoại/phiên hiện tại.
+  - **Long-term memory** (dài hạn): lưu bền (SQLite/JSONL) + chỉ mục truy hồi.
+- **Loop monitor (giám sát vòng lặp)**: đo lặp (repetition), phát hiện “stuckness” (kẹt), kích hoạt chiến lược.
+- **Arbitration UI/CLI**: kênh hỏi người dùng xác nhận (CLI prompt, web UI đơn giản).
 
-**Mục tiêu**: hiểu 4 khối quan trọng của blockchain node.
-
-1) **Block** (khối):
-- Chứa header + body (giao dịch, snark work…).
-- **Header** (đầu khối): metadata (parent hash, state hash…).
-
-2) **Consensus** (đồng thuận):
-- Logic chọn chain tốt nhất.
-- **Finality** (tính chắc chắn): mức độ “khó bị đảo ngược” của block.
-
-3) **Ledger** (sổ cái):
-- Thường là cấu trúc Merkle (cây băm – *cho phép chứng minh phần tử thuộc tập*).
-- Hỗ trợ tạo/verify **Merkle proof** (bằng chứng Merkle).
-
-4) **Mempool**:
-- Policy nhận giao dịch: fee, nonce, signature.
-- Chống spam: rate limit.
-
-**Bài tập đề xuất**:
-- Trace một giao dịch: RPC submit → vào mempool → inclusion trong block → ledger update.
-
----
-
-### Giai đoạn 3 — zk-SNARK: khái niệm tối thiểu để đọc code
-
-**Mục tiêu**: không cần thành chuyên gia crypto, nhưng hiểu được “ai tạo proof, ai verify, proof gắn với cái gì”.
-
-- **Circuit** (mạch – *mô hình ràng buộc toán học*): biểu diễn logic cần chứng minh.
-- **Prover** (bên tạo proof): tạo bằng chứng.
-- **Verifier** (bên kiểm tra): kiểm tra proof nhanh.
-- **Trusted setup** (thiết lập tin cậy – *giai đoạn tạo tham số*): có/không tuỳ hệ.
-- **Recursive proofs** (bằng chứng đệ quy – *proof chứng minh việc verify proof khác*): giúp nén lịch sử.
-
-**Bài tập đề xuất**:
-- Tìm nơi code định nghĩa circuit/constraints (nếu có).
-- Xem pipeline: generate proof → verify proof → attach to block/state.
+### 3.2 Luồng dữ liệu (dataflow) tối thiểu
+1. Người dùng nhập task.
+2. Orchestrator tạo “episode” (một phiên xử lý) + nạp bộ nhớ dài hạn liên quan.
+3. Planner tạo plan → Critic phản biện → Orchestrator quyết.
+4. Executor thực thi tool / tạo output.
+5. Loop monitor theo dõi: nếu lặp → thay chiến lược hoặc hỏi người.
+6. Kết thúc: ghi tóm tắt và quyết định vào long-term memory.
 
 ---
 
-### Giai đoạn 4 — Networking (P2P) & Sync
+## 4) Loop awareness: định nghĩa & yêu cầu
+### 4.1 Định nghĩa
+**Loop awareness** là khả năng:
+- phát hiện một chuỗi trạng thái/hành động lặp lại hoặc không tiến triển;
+- đo “tiến triển” bằng tiêu chí định lượng;
+- có hành động can thiệp.
 
-**Mục tiêu**: hiểu node đồng bộ dữ liệu.
+### 4.2 Tín hiệu phát hiện vòng lặp (MVP)
+- **Repetition score (điểm lặp)**: so sánh n-gram của “thought/plan/tool call” giữa các bước; nếu giống > ngưỡng.
+- **Tool failure streak (chuỗi lỗi tool)**: cùng 1 tool/cùng lỗi lặp k lần.
+- **No-new-information**: 3 bước liên tiếp không tạo artifact mới (file/plan/test).
 
-- **Gossip** (truyền tin lan truyền): cơ chế broadcast giao dịch/blocks.
-- **Sync** (đồng bộ): initial sync (tải chain) vs catch-up.
-- **Peer** (điểm ngang hàng): quản lý connections, scoring.
-
-**Bài tập đề xuất**:
-- Quan sát log: peer connections, inbound/outbound, block fetch.
-- Mô phỏng slow peer hoặc partition (chia mạng – *mạng bị tách*).
-
----
-
-### Giai đoạn 5 — Tooling, QA và đóng góp
-
-**Mục tiêu**: có workflow đóng góp chuẩn.
-
-- **CI** (Continuous Integration – *tự động build/test khi mở PR*): đọc pipeline.
-- Viết test:
-  - Unit test (kiểm thử đơn vị).
-  - Integration test (kiểm thử tích hợp).
-- Observability:
-  - Log levels.
-  - Metrics (đếm/gauge/histogram).
-
-**Kết quả cần đạt**:
-- Mở PR nhỏ: sửa doc, thêm test, hoặc fix bug nhỏ kèm test.
+### 4.3 Chiến lược thoát vòng lặp (MVP)
+- **Backoff**: tăng thời gian chờ hoặc giảm số agent.
+- **Change strategy**: chuyển từ “search” sang “ask user”, hoặc từ “execute” sang “plan”.
+- **Ask human**: kích hoạt phân xử (arbitration).
 
 ---
 
-## 3) MVP Requirements (Yêu cầu MVP) – theo hướng “xây được thứ chạy được”
+## 5) Human-in-the-loop arbitration: định nghĩa & yêu cầu
+### 5.1 Định nghĩa
+**Human-in-the-loop** nghĩa là con người tham gia vào vòng ra quyết định ở các điểm then chốt.  
+**Arbitration** là cơ chế chọn phương án cuối cùng khi có tranh chấp/không chắc chắn.
 
-Phần này đề xuất một MVP mang tính **thực dụng** cho mina-core/stack liên quan: tạo một node/dev setup có khả năng chạy, quan sát, và cung cấp API cơ bản.
+### 5.2 Khi nào cần hỏi người dùng (MVP)
+- Critic đánh giá plan rủi ro cao (risk) hoặc thiếu thông tin.
+- Loop monitor báo kẹt.
+- Các agent đưa ra kết luận trái ngược (conflict) và không thể tự giải.
 
-### 3.1 Phạm vi MVP
+### 5.3 Giao diện hỏi (MVP)
+- CLI hỏi lựa chọn:
+  - Chọn phương án A/B/C
+  - Cho phép nhập “tiêu chí ưu tiên” (VD: nhanh/đúng/an toàn)
+  - Cho phép “dừng” hoặc “chạy tiếp”
 
-**MVP nên có**:
-1) **Khởi chạy node** với cấu hình tối thiểu.
-2) **Kết nối P2P** và sync (ít nhất là mode test/dev).
-3) **RPC/GraphQL/API** cơ bản để:
-   - Lấy status node.
-   - Submit transaction.
-   - Query account/ledger state.
-4) **Mempool** hoạt động:
-   - Nhận tx hợp lệ, từ chối tx sai (signature/nonce/fee).
-5) **Block production** (nếu môi trường cho phép):
-   - Tạo block trong devnet/sandbox.
-6) **Logging + metrics**:
-   - Log có cấu trúc (structured logging – *log dạng key/value dễ query*).
-   - Export metrics (Prometheus endpoint).
-
-**MVP không bắt buộc** (có thể để giai đoạn 2):
-- Tối ưu hiệu năng cao.
-- Hardening bảo mật production.
-- Tính năng UX nâng cao.
+### 5.4 Lưu vết quyết định (audit trail)
+- Log đầy đủ: ai đề xuất, lý do, ai phê bình, người dùng chọn gì.
+- Lưu trong long-term memory để tái sử dụng.
 
 ---
 
-### 3.2 Yêu cầu chức năng (Functional Requirements)
+## 6) Long-term reasoning memory: định nghĩa & yêu cầu
+### 6.1 Định nghĩa
+**Long-term reasoning memory** là bộ nhớ lưu trữ bền vững các “facts” (sự kiện), “decisions” (quyết định), “summaries” (tóm tắt), và có khả năng **retrieval (truy hồi)** khi cần.
 
-#### FR1 — Node lifecycle
-- Node phải **start/stop** sạch (graceful shutdown – *tắt có xử lý dở dang*).
-- Có healthcheck:
-  - `ready` (sẵn sàng phục vụ).
-  - `live` (đang chạy).
+### 6.2 Dạng dữ liệu tối thiểu
+- **Memory item** gồm:
+  - `id`, `timestamp`
+  - `type`: fact/decision/summary
+  - `content`: nội dung tiếng Việt/Anh
+  - `tags`: nhãn để tìm
+  - `source`: user/agent/tool
 
-#### FR2 — Networking & sync
-- Node có thể:
-  - Add peer tĩnh (static peer).
-  - Auto-discover peer (nếu có).
-  - Sync header/body tối thiểu.
+### 6.3 Lưu trữ (MVP)
+- Ưu tiên đơn giản: **SQLite** hoặc **JSONL** (mỗi dòng 1 JSON).
+- Có **index** đơn giản theo tag + tìm kiếm full-text.
 
-#### FR3 — Transaction path
-- RPC endpoint để submit tx.
-- Validate tx:
-  - **Signature** (chữ ký).
-  - **Nonce** (số thứ tự chống replay – *chống phát lại giao dịch*).
-  - Balance/fee.
-- Tx hợp lệ đi vào mempool.
-
-#### FR4 — Ledger query
-- Query account:
-  - balance
-  - nonce
-  - public key
-- Query chain head (đỉnh chain).
-
-#### FR5 — Observability
-- Logs:
-  - Có correlation id (mã liên kết – *theo dõi một request xuyên suốt*).
-- Metrics:
-  - peers_connected
-  - mempool_size
-  - blocks_received
-  - blocks_produced (nếu có)
-  - rpc_request_duration
+### 6.4 Truy hồi (MVP)
+- Top-k theo:
+  - keyword match
+  - tag match
+  - recency (độ mới)
 
 ---
 
-### 3.3 Yêu cầu phi chức năng (Non-Functional Requirements)
+## 7) Yêu cầu MVP (Must-have)
+### 7.1 Chức năng
+1. **Chạy được một phiên multi-agent** với ít nhất 2 agent (Planner + Critic) + Orchestrator.
+2. **Loop monitor** phát hiện lặp theo ít nhất 2 tiêu chí và kích hoạt xử lý.
+3. **Arbitration**: CLI prompt để người dùng chọn phương án khi:
+   - loop detected, hoặc
+   - conflict giữa agent.
+4. **Long-term memory**: lưu decision + summary sau mỗi phiên, và có retrieval đầu phiên.
+5. **Observability (quan sát hệ thống)**:
+   - log theo bước (step)
+   - có “event timeline” (dòng thời gian sự kiện)
 
-#### NFR1 — Reproducible build
-- Build phải tái lập:
-  - Build doc rõ ràng.
-  - Script/Dockerfile (nếu dùng) chạy được.
+### 7.2 Phi chức năng (Non-functional)
+- **Determinism tùy chọn**: cho phép seed (tái lập) ở chế độ test.
+- **An toàn**: tool execution sandbox/mock trong MVP.
+- **Khả năng mở rộng**: dễ thêm agent/tool.
 
-#### NFR2 — Performance (mức MVP)
-- Node không rò rỉ bộ nhớ nghiêm trọng.
-- RPC P95 latency (độ trễ 95% – *phần lớn request*) ở mức chấp nhận được trong dev.
-
-#### NFR3 — Security (tối thiểu)
-- RPC có giới hạn truy cập:
-  - bind localhost mặc định hoặc có allowlist.
-- Rate limiting (giới hạn tần suất) cho submit tx.
-
-#### NFR4 — Backward compatibility
-- Thay đổi config/RPC cần versioning:
-  - **SemVer** (phiên bản ngữ nghĩa – *MAJOR.MINOR.PATCH*).
-
----
-
-## 4) Checklist triển khai MVP (gợi ý theo sprint)
-
-### Sprint 1 — “Chạy được”
-- [ ] Build từ source
-- [ ] Chạy node với config tối thiểu
-- [ ] Log startup + version info
-
-### Sprint 2 — “Nói chuyện được”
-- [ ] P2P connect peer
-- [ ] Sync tối thiểu (head tip)
-- [ ] Endpoint status/health
-
-### Sprint 3 — “Gửi giao dịch được”
-- [ ] RPC submit tx
-- [ ] Validate tx + mempool
-- [ ] Metrics mempool/tx accepted/rejected
-
-### Sprint 4 — “Quan sát & ổn định”
-- [ ] Prometheus metrics endpoint
-- [ ] Basic dashboards (tùy chọn)
-- [ ] Integration test cho tx path
+### 7.3 Tiêu chí nghiệm thu (Acceptance Criteria)
+- Demo kịch bản:
+  1) User giao “tóm tắt module X và đề xuất cải tiến”.
+  2) Planner đề xuất 2 phương án.
+  3) Critic phản biện và chỉ ra rủi ro.
+  4) Orchestrator phát hiện bất đồng → hỏi người.
+  5) Người chọn 1 phương án.
+  6) Hệ thống ghi quyết định vào memory.
+  7) Lần chạy sau, hệ thống truy hồi và nhắc lại quyết định.
 
 ---
 
-## 5) Danh mục thuật ngữ (Glossary) – giải thích nhanh
+## 8) Lộ trình học tập (Learning Roadmap) theo tuần
+> Mục tiêu: vừa học vừa hiện thực MVP. Có thể co giãn theo thời gian.
 
-- **MVP (Minimum Viable Product)**: phiên bản tối thiểu có thể vận hành để kiểm chứng.
-- **PoS (Proof of Stake)**: cơ chế đồng thuận dựa trên stake.
-- **zk-SNARK**: bằng chứng không tiết lộ, ngắn gọn, kiểm tra nhanh.
-- **Merkle tree**: cấu trúc cây băm để chứng minh dữ liệu thuộc tập.
-- **RPC**: API gọi hàm từ xa.
-- **GraphQL**: dạng API truy vấn theo schema, client chọn trường cần lấy.
-- **Gossip**: cơ chế lan truyền thông tin trong mạng P2P.
-- **Rate limit**: giới hạn tần suất request để chống spam.
-- **P95 latency**: độ trễ ở percentile 95.
+### Tuần 1 — Nền tảng Python cho agentic systems
+- Củng cố:
+  - typing, dataclasses/pydantic (schema dữ liệu)
+  - asyncio (bất đồng bộ = chạy song song giả lập bằng event loop)
+  - logging chuẩn
+- Bài tập:
+  - viết log events theo step
+  - thiết kế schema: Task, AgentOutput, ToolCall
+
+### Tuần 2 — Thiết kế Orchestrator & Agent interface
+- Học/thiết kế:
+  - interface `Agent.run(input) -> output`
+  - message passing (truyền thông điệp)
+  - prompt/plan structure (cấu trúc kế hoạch)
+- Bài tập:
+  - cài Orchestrator chạy Planner → Critic → quyết định.
+
+### Tuần 3 — Tooling layer & sandbox
+- Học:
+  - pattern “tool registry” (đăng ký tool)
+  - validation input/output
+  - mock tool (giả lập) để test
+- Bài tập:
+  - tool đọc file (read-only)
+  - tool search đơn giản
+
+### Tuần 4 — Loop awareness
+- Học:
+  - heuristic phát hiện lặp
+  - state machine (máy trạng thái) cho vòng đời episode
+- Bài tập:
+  - triển khai repetition score
+  - triển khai tool failure streak
+  - can thiệp: change strategy/ask human
+
+### Tuần 5 — Human-in-the-loop arbitration
+- Học:
+  - UX cho CLI confirmation
+  - conflict resolution (giải quyết xung đột)
+- Bài tập:
+  - hiển thị A/B, nhận lựa chọn
+  - ghi audit trail
+
+### Tuần 6 — Long-term memory
+- Học:
+  - SQLite/JSONL
+  - full-text search cơ bản
+  - tóm tắt (summary) sau phiên
+- Bài tập:
+  - lưu decision + summary
+  - retrieval top-k đầu phiên
+
+### Tuần 7 — Testing & evaluation
+- Học:
+  - pytest
+  - golden tests (test theo “kết quả chuẩn”)
+  - simulation runs (chạy mô phỏng)
+- Bài tập:
+  - test loop detection
+  - test arbitration path
+  - test memory retrieval
+
+### Tuần 8 — Đóng gói & tài liệu
+- Học:
+  - packaging (pyproject)
+  - CLI entrypoint
+  - docs
+- Bài tập:
+  - `python -m ...` chạy demo
+  - viết README hướng dẫn
 
 ---
 
-## 6) Gợi ý đóng góp tiếp theo
+## 9) Đề xuất cấu trúc thư mục (tham khảo)
+```
+repo/
+  src/
+    core/
+      orchestrator.py
+      agents/
+        base.py
+        planner.py
+        critic.py
+        executor.py
+      tools/
+        registry.py
+        read_file.py
+        search.py
+      loop/
+        monitor.py
+        heuristics.py
+      memory/
+        store.py
+        schema.py
+        retrieval.py
+      ui/
+        cli.py
+  tests/
+    test_loop_monitor.py
+    test_arbitration.py
+    test_memory.py
+  docs/
+    MVP_ROADMAP_VI.md
+```
 
-- Viết thêm tài liệu “How to run devnet/sandbox” bằng tiếng Việt.
-- Thêm ví dụ gọi RPC submit tx + query account.
-- Tạo checklist debug thường gặp: peer không connect, sync kẹt, tx bị reject.
+---
+
+## 10) Glossary (giải thích thuật ngữ nhanh)
+- **Agent (tác tử)**: chương trình con có vai trò cụ thể, có thể đề xuất và hành động.
+- **Orchestrator (bộ điều phối)**: thành phần điều phối nhiều agent.
+- **Loop awareness (nhận biết vòng lặp)**: phát hiện kẹt/lặp và can thiệp.
+- **Human-in-the-loop (người trong vòng lặp)**: có điểm dừng để người ra quyết định.
+- **Arbitration (phân xử)**: chọn phương án cuối khi bất đồng.
+- **Long-term memory (bộ nhớ dài hạn)**: lưu bền vững qua nhiều lần chạy.
+- **Retrieval (truy hồi)**: tìm lại ghi nhớ liên quan.
+- **Heuristic (phép kinh nghiệm)**: quy tắc gần đúng để phát hiện/ra quyết định.
+
+---
+
+## 11) TODO (ngắn) để bắt đầu ngay
+1. Tạo skeleton Orchestrator + 2 agent.
+2. Thêm event log theo step.
+3. Viết loop monitor (repetition + tool-failure).
+4. Thêm CLI arbitration.
+5. Thêm memory JSONL/SQLite.
+6. Viết 3 bài test chính.
