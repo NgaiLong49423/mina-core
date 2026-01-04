@@ -1,280 +1,400 @@
-# Lộ trình học tập & MVP (Việt ngữ) cho **hệ thống suy luận đa tác tử (multi-agent)** bằng Python
+# MVP ROADMAP (VI) – Hệ thống suy luận đa tác tử (Multi‑Agent Reasoning) bằng Python
 
-> Tài liệu này **thay thế hoàn toàn** mọi nội dung liên quan Mina blockchain/node trước đây.  
-> Mục tiêu: mô tả **lộ trình học tập** và **yêu cầu MVP** cho repo được định vị như một **hệ thống suy luận đa tác tử** có **nhận biết vòng lặp (loop awareness)**, **phân xử có người trong vòng lặp (human-in-the-loop arbitration)** và **bộ nhớ suy luận dài hạn (long-term reasoning memory)**.
-
----
-
-## 1) Tầm nhìn sản phẩm (Product Vision)
-Xây dựng một framework/ứng dụng Python cho phép nhiều tác tử (agent = “tác nhân phần mềm” có thể lập kế hoạch và hành động) phối hợp để giải bài toán, trong đó:
-
-- **Loop awareness (nhận biết vòng lặp)**: hệ thống phát hiện khi agent đang lặp lại cùng một chu kỳ hành động/suy nghĩ (ví dụ: hỏi–đáp vòng tròn, gọi tool thất bại lặp lại) và tự áp dụng chiến lược thoát vòng lặp.
-- **Human-in-the-loop arbitration (phân xử có người tham gia)**: khi các agent bất đồng hoặc độ tin cậy thấp, hệ thống tạm dừng và xin quyết định/ưu tiên từ người dùng (arbitration = “phân xử/ra quyết định cuối”).
-- **Long-term reasoning memory (bộ nhớ suy luận dài hạn)**: lưu trữ bền vững các sự kiện, quyết định, ngữ cảnh dự án… để tái sử dụng qua nhiều phiên (session), tránh “mất trí nhớ” khi chạy lại.
-
-Kết quả mong muốn: một MVP chạy được end-to-end, có giám sát vòng lặp, có cơ chế xin phán quyết của người, và có bộ nhớ dài hạn đủ dùng.
+> Mục tiêu tài liệu này: cung cấp **lộ trình học & làm** “beginner‑friendly” (thân thiện cho người mới) để xây dựng một **hệ thống suy luận đa tác tử** bằng **Python**, theo từng tuần, có **micro‑deliverables** (mốc bàn giao nhỏ), **terminal outputs** (kết quả mong đợi khi chạy trong terminal), lịch học gợi ý theo **6h / 10h / 15h mỗi tuần**, kèm **checklist** và **glossary** (bảng thuật ngữ).
+>
+> **Phạm vi**: chỉ tập trung vào **Python + multi‑agent reasoning system**; **không** bàn về Mina blockchain.
 
 ---
 
-## 2) Người dùng mục tiêu & use-cases
-### 2.1 Persona
-- **Dev/Researcher** muốn thử nghiệm kiến trúc multi-agent có kiểm soát vòng lặp.
-- **PM/Operator** muốn ủy quyền tác vụ (điều tra lỗi, viết tài liệu, tạo PR) nhưng cần can thiệp khi hệ thống không chắc.
+## Tổng quan lộ trình
 
-### 2.2 Use-cases MVP (tối thiểu)
-1. **Tìm hiểu codebase & trả lời câu hỏi**: agent đọc repo, tóm tắt module, trả lời “file này làm gì?”.
-2. **Tạo kế hoạch thay đổi nhỏ**: agent đề xuất các bước sửa lỗi/viết test.
-3. **Thực thi công cụ (tool use)**: chạy lệnh giả lập hoặc gọi API nội bộ (trong MVP có thể mock).
-4. **Tranh luận giữa agent**: ít nhất 2 agent đưa ra phương án khác nhau và có cơ chế chọn.
-5. **Xin phân xử từ người dùng**: khi bế tắc/không chắc, hệ thống hỏi người dùng chọn A/B.
-6. **Nhớ quyết định**: lựa chọn của người dùng được ghi vào bộ nhớ và áp dụng về sau.
+- **Phase 0 (Mới): Nền tảng Python** → nắm vững cú pháp và công cụ để “làm được việc”.
+- **Phase 1: Nền tảng hệ thống & LLM** → CLI, logging, test, HTTP, prompt, tools.
+- **Phase 2: MVP‑0** → 1 tác tử (agent) có “reasoning loop” (vòng suy luận) + tools.
+- **Phase 3: MVP‑1** → đa tác tử (multi‑agent) phối hợp (orchestrator/router).
+- **Phase 4: MVP‑2** → chất lượng sản phẩm: memory, eval, guardrails, quan sát/giám sát.
+
+Thời lượng gợi ý: **8–12 tuần** (tùy tốc độ).
 
 ---
 
-## 3) Kiến trúc tổng quan (High-level Architecture)
-### 3.1 Thành phần chính
-- **Orchestrator (bộ điều phối)**: quản lý vòng đời phiên làm việc, phân công nhiệm vụ, gom kết quả.
-- **Agent**: mỗi agent có vai trò (role) riêng, ví dụ:
-  - **Planner agent** (lập kế hoạch)
-  - **Critic agent** (phê bình/đánh giá)
-  - **Executor agent** (thực thi tool)
-- **Tooling layer (lớp công cụ)**: các “tool” mà agent có thể gọi (VD: đọc file, tìm kiếm, chạy test). MVP có thể dùng tool giả lập (mock) trước.
-- **Memory subsystem (hệ bộ nhớ)**:
-  - **Short-term memory** (ngắn hạn): trạng thái hội thoại/phiên hiện tại.
-  - **Long-term memory** (dài hạn): lưu bền (SQLite/JSONL) + chỉ mục truy hồi.
-- **Loop monitor (giám sát vòng lặp)**: đo lặp (repetition), phát hiện “stuckness” (kẹt), kích hoạt chiến lược.
-- **Arbitration UI/CLI**: kênh hỏi người dùng xác nhận (CLI prompt, web UI đơn giản).
+# Phase 0 – Python Fundamentals (Nền tảng Python cho người mới)
 
-### 3.2 Luồng dữ liệu (dataflow) tối thiểu
-1. Người dùng nhập task.
-2. Orchestrator tạo “episode” (một phiên xử lý) + nạp bộ nhớ dài hạn liên quan.
-3. Planner tạo plan → Critic phản biện → Orchestrator quyết.
-4. Executor thực thi tool / tạo output.
-5. Loop monitor theo dõi: nếu lặp → thay chiến lược hoặc hỏi người.
-6. Kết thúc: ghi tóm tắt và quyết định vào long-term memory.
+Mục tiêu: sau Phase 0 bạn phải **tự tin viết một project Python nhỏ**, biết tạo môi trường, cài thư viện, chạy test, debug lỗi cơ bản.
 
----
+### Kỹ năng cần đạt
+- Biết dùng **terminal/shell** (cửa sổ dòng lệnh) cơ bản.
+- Biết tạo **virtual environment** (môi trường ảo – nơi cài thư viện riêng cho project).
+- Biết quản lý dependency bằng **pip** (trình cài gói) và **requirements.txt** (danh sách thư viện).
+- Hiểu kiểu dữ liệu, hàm, module, package, OOP tối thiểu.
+- Biết đọc/ghi file, xử lý JSON.
 
-## 4) Loop awareness: định nghĩa & yêu cầu
-### 4.1 Định nghĩa
-**Loop awareness** là khả năng:
-- phát hiện một chuỗi trạng thái/hành động lặp lại hoặc không tiến triển;
-- đo “tiến triển” bằng tiêu chí định lượng;
-- có hành động can thiệp.
+## Week 0.1 – Cài đặt & làm quen môi trường
 
-### 4.2 Tín hiệu phát hiện vòng lặp (MVP)
-- **Repetition score (điểm lặp)**: so sánh n-gram của “thought/plan/tool call” giữa các bước; nếu giống > ngưỡng.
-- **Tool failure streak (chuỗi lỗi tool)**: cùng 1 tool/cùng lỗi lặp k lần.
-- **No-new-information**: 3 bước liên tiếp không tạo artifact mới (file/plan/test).
+**Micro‑deliverables**
+- [ ] Cài Python 3.11+ (khuyến nghị).
+- [ ] Tạo venv và kích hoạt.
+- [ ] Tạo repo structure tối thiểu.
 
-### 4.3 Chiến lược thoát vòng lặp (MVP)
-- **Backoff**: tăng thời gian chờ hoặc giảm số agent.
-- **Change strategy**: chuyển từ “search” sang “ask user”, hoặc từ “execute” sang “plan”.
-- **Ask human**: kích hoạt phân xử (arbitration).
+**Terminal outputs mong đợi**
+```bash
+python --version
+# Python 3.11.x
 
----
+python -m venv .venv
+source .venv/bin/activate  # macOS/Linux
+# hoặc .venv\Scripts\activate  # Windows
 
-## 5) Human-in-the-loop arbitration: định nghĩa & yêu cầu
-### 5.1 Định nghĩa
-**Human-in-the-loop** nghĩa là con người tham gia vào vòng ra quyết định ở các điểm then chốt.  
-**Arbitration** là cơ chế chọn phương án cuối cùng khi có tranh chấp/không chắc chắn.
-
-### 5.2 Khi nào cần hỏi người dùng (MVP)
-- Critic đánh giá plan rủi ro cao (risk) hoặc thiếu thông tin.
-- Loop monitor báo kẹt.
-- Các agent đưa ra kết luận trái ngược (conflict) và không thể tự giải.
-
-### 5.3 Giao diện hỏi (MVP)
-- CLI hỏi lựa chọn:
-  - Chọn phương án A/B/C
-  - Cho phép nhập “tiêu chí ưu tiên” (VD: nhanh/đúng/an toàn)
-  - Cho phép “dừng” hoặc “chạy tiếp”
-
-### 5.4 Lưu vết quyết định (audit trail)
-- Log đầy đủ: ai đề xuất, lý do, ai phê bình, người dùng chọn gì.
-- Lưu trong long-term memory để tái sử dụng.
-
----
-
-## 6) Long-term reasoning memory: định nghĩa & yêu cầu
-### 6.1 Định nghĩa
-**Long-term reasoning memory** là bộ nhớ lưu trữ bền vững các “facts” (sự kiện), “decisions” (quyết định), “summaries” (tóm tắt), và có khả năng **retrieval (truy hồi)** khi cần.
-
-### 6.2 Dạng dữ liệu tối thiểu
-- **Memory item** gồm:
-  - `id`, `timestamp`
-  - `type`: fact/decision/summary
-  - `content`: nội dung tiếng Việt/Anh
-  - `tags`: nhãn để tìm
-  - `source`: user/agent/tool
-
-### 6.3 Lưu trữ (MVP)
-- Ưu tiên đơn giản: **SQLite** hoặc **JSONL** (mỗi dòng 1 JSON).
-- Có **index** đơn giản theo tag + tìm kiếm full-text.
-
-### 6.4 Truy hồi (MVP)
-- Top-k theo:
-  - keyword match
-  - tag match
-  - recency (độ mới)
-
----
-
-## 7) Yêu cầu MVP (Must-have)
-### 7.1 Chức năng
-1. **Chạy được một phiên multi-agent** với ít nhất 2 agent (Planner + Critic) + Orchestrator.
-2. **Loop monitor** phát hiện lặp theo ít nhất 2 tiêu chí và kích hoạt xử lý.
-3. **Arbitration**: CLI prompt để người dùng chọn phương án khi:
-   - loop detected, hoặc
-   - conflict giữa agent.
-4. **Long-term memory**: lưu decision + summary sau mỗi phiên, và có retrieval đầu phiên.
-5. **Observability (quan sát hệ thống)**:
-   - log theo bước (step)
-   - có “event timeline” (dòng thời gian sự kiện)
-
-### 7.2 Phi chức năng (Non-functional)
-- **Determinism tùy chọn**: cho phép seed (tái lập) ở chế độ test.
-- **An toàn**: tool execution sandbox/mock trong MVP.
-- **Khả năng mở rộng**: dễ thêm agent/tool.
-
-### 7.3 Tiêu chí nghiệm thu (Acceptance Criteria)
-- Demo kịch bản:
-  1) User giao “tóm tắt module X và đề xuất cải tiến”.
-  2) Planner đề xuất 2 phương án.
-  3) Critic phản biện và chỉ ra rủi ro.
-  4) Orchestrator phát hiện bất đồng → hỏi người.
-  5) Người chọn 1 phương án.
-  6) Hệ thống ghi quyết định vào memory.
-  7) Lần chạy sau, hệ thống truy hồi và nhắc lại quyết định.
-
----
-
-## 8) Lộ trình học tập (Learning Roadmap) theo tuần
-> Mục tiêu: vừa học vừa hiện thực MVP. Có thể co giãn theo thời gian.
-
-### Tuần 1 — Nền tảng Python cho agentic systems
-- Củng cố:
-  - typing, dataclasses/pydantic (schema dữ liệu)
-  - asyncio (bất đồng bộ = chạy song song giả lập bằng event loop)
-  - logging chuẩn
-- Bài tập:
-  - viết log events theo step
-  - thiết kế schema: Task, AgentOutput, ToolCall
-
-### Tuần 2 — Thiết kế Orchestrator & Agent interface
-- Học/thiết kế:
-  - interface `Agent.run(input) -> output`
-  - message passing (truyền thông điệp)
-  - prompt/plan structure (cấu trúc kế hoạch)
-- Bài tập:
-  - cài Orchestrator chạy Planner → Critic → quyết định.
-
-### Tuần 3 — Tooling layer & sandbox
-- Học:
-  - pattern “tool registry” (đăng ký tool)
-  - validation input/output
-  - mock tool (giả lập) để test
-- Bài tập:
-  - tool đọc file (read-only)
-  - tool search đơn giản
-
-### Tuần 4 — Loop awareness
-- Học:
-  - heuristic phát hiện lặp
-  - state machine (máy trạng thái) cho vòng đời episode
-- Bài tập:
-  - triển khai repetition score
-  - triển khai tool failure streak
-  - can thiệp: change strategy/ask human
-
-### Tuần 5 — Human-in-the-loop arbitration
-- Học:
-  - UX cho CLI confirmation
-  - conflict resolution (giải quyết xung đột)
-- Bài tập:
-  - hiển thị A/B, nhận lựa chọn
-  - ghi audit trail
-
-### Tuần 6 — Long-term memory
-- Học:
-  - SQLite/JSONL
-  - full-text search cơ bản
-  - tóm tắt (summary) sau phiên
-- Bài tập:
-  - lưu decision + summary
-  - retrieval top-k đầu phiên
-
-### Tuần 7 — Testing & evaluation
-- Học:
-  - pytest
-  - golden tests (test theo “kết quả chuẩn”)
-  - simulation runs (chạy mô phỏng)
-- Bài tập:
-  - test loop detection
-  - test arbitration path
-  - test memory retrieval
-
-### Tuần 8 — Đóng gói & tài liệu
-- Học:
-  - packaging (pyproject)
-  - CLI entrypoint
-  - docs
-- Bài tập:
-  - `python -m ...` chạy demo
-  - viết README hướng dẫn
-
----
-
-## 9) Đề xuất cấu trúc thư mục (tham khảo)
+python -c "import sys; print(sys.executable)"
+# .../.venv/bin/python
 ```
-repo/
-  src/
-    core/
-      orchestrator.py
-      agents/
-        base.py
-        planner.py
-        critic.py
-        executor.py
-      tools/
-        registry.py
-        read_file.py
-        search.py
-      loop/
-        monitor.py
-        heuristics.py
-      memory/
-        store.py
-        schema.py
-        retrieval.py
-      ui/
-        cli.py
-  tests/
-    test_loop_monitor.py
-    test_arbitration.py
-    test_memory.py
-  docs/
-    MVP_ROADMAP_VI.md
+
+## Week 0.2 – Python cơ bản (data types, function, control flow)
+
+Giải thích thuật ngữ inline:
+- **control flow (luồng điều khiển)**: if/elif/else, for, while.
+- **function (hàm)**: khối code tái sử dụng.
+
+**Micro‑deliverables**
+- [ ] Viết `scripts/hello.py` in ra “Hello Agent!”.
+- [ ] Viết `scripts/sum_numbers.py` nhận input từ argv (tham số dòng lệnh) và in tổng.
+
+**Terminal outputs**
+```bash
+python scripts/hello.py
+# Hello Agent!
+
+python scripts/sum_numbers.py 1 2 3
+# 6
+```
+
+## Week 0.3 – Module/Package, typing, logging cơ bản
+
+- **module (mô-đun)**: file `.py`.
+- **package (gói)**: thư mục có `__init__.py`.
+- **typing (kiểu tĩnh gợi ý)**: `list[str]`, `dict[str, Any]` giúp code rõ ràng.
+- **logging (ghi log)**: thay vì `print`, dùng `logging` để có mức độ INFO/ERROR.
+
+**Micro‑deliverables**
+- [ ] Tạo package `src/agentkit/`.
+- [ ] Viết `agentkit/log.py` cấu hình logging.
+
+**Terminal outputs**
+```bash
+python -c "from agentkit.log import get_logger; log=get_logger(__name__); log.info('ready')"
+# INFO ... ready
+```
+
+## Week 0.4 – File/JSON, exception, unit test
+
+- **JSON (JavaScript Object Notation – định dạng dữ liệu)**: hay dùng để lưu cấu hình.
+- **exception (ngoại lệ)**: lỗi có thể bắt bằng try/except.
+- **unit test (kiểm thử đơn vị)**: kiểm tra hàm nhỏ hoạt động đúng.
+
+**Micro‑deliverables**
+- [ ] Hàm `load_json(path)` trả dict.
+- [ ] Test bằng `pytest`.
+
+**Terminal outputs**
+```bash
+pytest -q
+# 1 passed
 ```
 
 ---
 
-## 10) Glossary (giải thích thuật ngữ nhanh)
-- **Agent (tác tử)**: chương trình con có vai trò cụ thể, có thể đề xuất và hành động.
-- **Orchestrator (bộ điều phối)**: thành phần điều phối nhiều agent.
-- **Loop awareness (nhận biết vòng lặp)**: phát hiện kẹt/lặp và can thiệp.
-- **Human-in-the-loop (người trong vòng lặp)**: có điểm dừng để người ra quyết định.
-- **Arbitration (phân xử)**: chọn phương án cuối khi bất đồng.
-- **Long-term memory (bộ nhớ dài hạn)**: lưu bền vững qua nhiều lần chạy.
-- **Retrieval (truy hồi)**: tìm lại ghi nhớ liên quan.
-- **Heuristic (phép kinh nghiệm)**: quy tắc gần đúng để phát hiện/ra quyết định.
+# Phase 1 – Nền tảng hệ thống + LLM (không cần biết blockchain)
+
+Mục tiêu: dựng khung project để sau đó “cắm” agent vào.
+
+## Week 1 – Project skeleton, CLI, config
+
+- **CLI (Command Line Interface – giao diện dòng lệnh)**: chạy như `python -m app ...`.
+- **config (cấu hình)**: file `.env`/`yaml`/`json` chứa key, model, đường dẫn.
+
+**Micro‑deliverables**
+- [ ] Tạo entrypoint `python -m agent_app`.
+- [ ] Hỗ trợ lệnh `agent_app --help`.
+- [ ] Đọc biến môi trường `OPENAI_API_KEY` (hoặc provider khác).
+
+**Terminal outputs**
+```bash
+python -m agent_app --help
+# Usage: agent_app [OPTIONS] ...
+```
+
+## Week 2 – HTTP + tools + prompt basics
+
+- **HTTP (giao thức web)**: gọi API.
+- **tool/function call (gọi công cụ/hàm)**: agent quyết định gọi hàm Python như `search_web()`.
+- **prompt (lời nhắc)**: văn bản hướng dẫn LLM.
+
+**Micro‑deliverables**
+- [ ] Viết tool `read_file(path)` và `write_file(path, content)` (chỉ trong workspace an toàn).
+- [ ] Viết prompt template có “role” và “constraints” (ràng buộc).
+
+**Terminal outputs**
+```bash
+python -m agent_app run --task "Đọc README và tóm tắt"
+# PLAN: ...
+# TOOL: read_file('README.md')
+# RESULT: ...
+# FINAL: ...
+```
+
+## Week 3 – Observability (quan sát), eval (đánh giá) tối thiểu
+
+- **observability (quan sát hệ thống)**: log, trace (dấu vết), metrics.
+- **eval (evaluation – đánh giá)**: tập câu hỏi chuẩn để đo chất lượng.
+
+**Micro‑deliverables**
+- [ ] Log structured (log có JSON fields như `task_id`, `step`).
+- [ ] Tạo `eval/questions.json` và script chạy batch.
+
+**Terminal outputs**
+```bash
+python -m agent_app eval --suite eval/questions.json
+# PASS 7/10
+```
 
 ---
 
-## 11) TODO (ngắn) để bắt đầu ngay
-1. Tạo skeleton Orchestrator + 2 agent.
-2. Thêm event log theo step.
-3. Viết loop monitor (repetition + tool-failure).
-4. Thêm CLI arbitration.
-5. Thêm memory JSONL/SQLite.
-6. Viết 3 bài test chính.
+# Phase 2 – MVP‑0 (Single‑Agent Reasoning)
+
+MVP được chia thành 3 mức:
+- **MVP‑0**: 1 agent, loop cơ bản, tools tối thiểu.
+- **MVP‑1**: nhiều agent phối hợp.
+- **MVP‑2**: chất lượng sản phẩm (memory, guardrails, eval nghiêm túc).
+
+## Week 4 – Agent loop (vòng suy luận) + state
+
+- **agent (tác tử)**: thành phần có mục tiêu, có thể suy luận và gọi tool.
+- **loop (vòng lặp)**: agent suy nghĩ → chọn hành động → quan sát → cập nhật.
+- **state (trạng thái)**: dữ liệu lưu trong một phiên chạy.
+
+**Micro‑deliverables**
+- [ ] Cấu trúc `AgentState` (task, history, scratchpad).
+- [ ] Loop tối đa N bước để tránh chạy vô hạn.
+
+**Terminal outputs**
+```bash
+python -m agent_app run --task "Tạo checklist học Python 7 ngày"
+# STEP 1/8 ...
+# STEP 2/8 ...
+# FINAL: ...
+```
+
+## Week 5 – Tool routing + error handling
+
+- **routing (định tuyến)**: chọn tool phù hợp dựa trên ý định.
+- **error handling (xử lý lỗi)**: tool fail thì agent thử lại/đổi chiến lược.
+
+**Micro‑deliverables**
+- [ ] Tool registry (danh bạ tool).
+- [ ] Retry policy (chính sách thử lại) cho lỗi tạm thời.
+
+**Terminal outputs**
+```bash
+python -m agent_app run --task "Tìm file không tồn tại"
+# TOOL: read_file('nope.txt')
+# ERROR: FileNotFoundError
+# RECOVERY: hỏi người dùng hoặc đề xuất đường dẫn đúng
+```
+
+## Week 6 – Mini demo MVP‑0
+
+**Micro‑deliverables**
+- [ ] Demo “Research + Write”: đọc 2–3 file nội bộ và tạo báo cáo Markdown.
+- [ ] Output lưu tại `out/report.md`.
+
+**Terminal outputs**
+```bash
+python -m agent_app run --task "Tạo report từ docs/*.md" --out out/report.md
+# Wrote out/report.md
+```
+
+---
+
+# Phase 3 – MVP‑1 (Multi‑Agent Collaboration)
+
+## Week 7 – Orchestrator + roles
+
+- **orchestrator (điều phối)**: agent chính phân chia việc cho agent con.
+- **role (vai trò)**: ví dụ Researcher (nghiên cứu), Writer (viết), Critic (phản biện).
+
+**Micro‑deliverables**
+- [ ] Định nghĩa 3 role agents.
+- [ ] Orchestrator chia task thành subtasks (nhiệm vụ con).
+
+**Terminal outputs**
+```bash
+python -m agent_app run --task "Viết hướng dẫn cài đặt project" --mode multi
+# DELEGATE: Researcher ...
+# DELEGATE: Writer ...
+# DELEGATE: Critic ...
+# FINAL: ...
+```
+
+## Week 8 – Shared memory + message passing
+
+- **memory (bộ nhớ)**: nơi lưu kiến thức/ghi chú.
+- **message passing (truyền thông điệp)**: agent gửi kết quả cho nhau.
+
+**Micro‑deliverables**
+- [ ] Shared `MemoryStore` (in‑memory hoặc file JSON).
+- [ ] Format message chuẩn `{from,to,content,citations}`.
+
+**Terminal outputs**
+```bash
+python -m agent_app run --task "Tổng hợp ghi chú" --mode multi
+# MEMORY: saved 5 notes
+```
+
+## Week 9 – Tool sandbox + safety
+
+- **sandbox (hộp cát)**: giới hạn quyền ghi/đọc file.
+- **safety (an toàn)**: tránh prompt injection (tấn công bằng prompt – lệnh độc).
+
+**Micro‑deliverables**
+- [ ] Chỉ cho phép ghi vào `out/`.
+- [ ] Rule: không chạy shell command nếu chưa whitelist.
+
+**Terminal outputs**
+```bash
+python -m agent_app run --task "Xóa /" --mode multi
+# BLOCKED: Unsafe tool request (attempted destructive action)
+```
+
+---
+
+# Phase 4 – MVP‑2 (Productization)
+
+## Week 10 – Retrieval + memory bền vững
+
+- **retrieval (truy hồi)**: tìm thông tin liên quan.
+- **embedding (vector hoá)**: biến text thành vector để tìm gần đúng.
+
+**Micro‑deliverables**
+- [ ] Index tài liệu local `docs/`.
+- [ ] Truy hồi top‑k đoạn liên quan.
+
+**Terminal outputs**
+```bash
+python -m agent_app ask --q "agent loop là gì?"
+# SOURCES: docs/...
+# ANSWER: ...
+```
+
+## Week 11 – Eval nghiêm túc + regression
+
+- **regression test (test hồi quy)**: đảm bảo thay đổi không làm hỏng chất lượng.
+
+**Micro‑deliverables**
+- [ ] Eval suite 30 câu.
+- [ ] Báo cáo trend theo thời gian.
+
+**Terminal outputs**
+```bash
+python -m agent_app eval --suite eval/suite_v1.json
+# PASS 24/30 (80%)
+```
+
+## Week 12 – Packaging + docs + release
+
+- **packaging (đóng gói)**: `pyproject.toml` để cài bằng pip.
+- **release (phát hành)**: tag version.
+
+**Micro‑deliverables**
+- [ ] `pip install -e .` chạy được.
+- [ ] `README` có quickstart.
+
+**Terminal outputs**
+```bash
+pip install -e .
+python -m agent_app --help
+```
+
+---
+
+# Lịch học gợi ý (6h / 10h / 15h mỗi tuần)
+
+> Mục tiêu lịch: giúp bạn đều đặn, tránh “học dồn”. Chọn 1 mức và giữ tối thiểu 3–4 tuần.
+
+## Option A – 6h/tuần (rất bận)
+- 3 buổi × 2h
+  - 20’ đọc/ôn
+  - 70’ code theo micro‑deliverables
+  - 20’ ghi chú + commit
+  - 10’ review checklist
+
+## Option B – 10h/tuần (cân bằng)
+- 5 buổi × 2h
+  - 15’ ôn + đọc thuật ngữ
+  - 90’ code
+  - 15’ test + viết log học tập
+
+## Option C – 15h/tuần (tập trung)
+- 5 buổi × 3h
+  - 30’ đọc/docs
+  - 120’ xây tính năng
+  - 30’ test/eval + refactor
+
+---
+
+# Checklists (Danh sách kiểm)
+
+## Checklist Phase 0
+- [ ] Biết tạo venv và cài thư viện.
+- [ ] Viết được module/package.
+- [ ] Biết `pytest` tối thiểu.
+- [ ] Biết đọc/ghi JSON.
+
+## Checklist MVP‑0
+- [ ] Có agent loop giới hạn bước.
+- [ ] Có tool registry.
+- [ ] Có xử lý lỗi và retry.
+- [ ] Có demo tạo file output.
+
+## Checklist MVP‑1
+- [ ] Có orchestrator và ít nhất 3 role.
+- [ ] Có message passing.
+- [ ] Có shared memory.
+- [ ] Có sandbox hạn chế tác vụ nguy hiểm.
+
+## Checklist MVP‑2
+- [ ] Có retrieval top‑k.
+- [ ] Có eval suite >= 30 câu.
+- [ ] Có regression theo phiên bản.
+- [ ] Có packaging + docs.
+
+---
+
+# Glossary (Thuật ngữ)
+
+- **Agent (tác tử)**: thành phần phần mềm nhận nhiệm vụ, suy luận, gọi công cụ và tạo kết quả.
+- **Multi‑agent (đa tác tử)**: nhiều agent có vai trò khác nhau phối hợp.
+- **Reasoning loop (vòng suy luận)**: chu trình *plan → act → observe → update*.
+- **Tool (công cụ)**: hàm/khả năng bên ngoài LLM (đọc file, gọi HTTP…).
+- **Orchestrator (điều phối)**: agent hoặc module điều phối các agent khác.
+- **Routing (định tuyến)**: chọn công cụ/agent phù hợp theo ngữ cảnh.
+- **Memory (bộ nhớ)**: nơi lưu ghi chú/tri thức trong hoặc ngoài phiên.
+- **Retrieval (truy hồi)**: tìm nội dung liên quan để đưa vào ngữ cảnh.
+- **Embedding (vector hoá)**: biến văn bản thành vector số để so sánh giống nhau.
+- **Observability (quan sát)**: log/trace/metrics để hiểu hệ thống đang làm gì.
+- **Eval (đánh giá)**: đo chất lượng qua bộ câu hỏi chuẩn.
+- **Guardrails (lan can an toàn)**: quy tắc hạn chế hành vi nguy hiểm (xóa file, lộ secrets…).
+- **Prompt injection (tấn công prompt)**: dữ liệu đầu vào cố “lừa” agent làm điều không an toàn.
+
+---
+
+## Gợi ý tiếp theo
+
+Nếu bạn muốn, có thể mở issue/PR cho từng tuần:
+- `week-04-agent-loop`
+- `week-07-orchestrator`
+- `week-10-retrieval`
+
+Mỗi PR chỉ nên có:
+- mục tiêu tuần
+- checklist
+- demo command + expected output
