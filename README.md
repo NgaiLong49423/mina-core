@@ -107,6 +107,32 @@ Mina vận hành dựa trên các trụ cột sau:
 - Mà để **thoát khỏi bẫy logic khép kín** của AI và cả User,  
   tìm các góc nhìn mới khi mọi hướng suy luận quen thuộc đều bế tắc
 
+## 3.7 Quyền kiến trúc & quyền quyết định cuối
+
+Mina là một hệ thống được **thiết kế có chủ đích**,  
+không phải hệ thống biểu quyết theo số đông.
+
+Hệ thống cho phép:
+- nhiều agent cùng tranh luận và phản biện,
+- phản biện lại cả User,
+- lặp suy luận để đào sâu vấn đề.
+
+Tuy nhiên:
+
+- Không agent nào (kể cả AI hay User-agent) có quyền quyết định cuối cùng.
+- Quyết định không được suy ra bằng việc “đa số đồng ý”.
+
+**Quyền dừng, quyền chấp nhận hoặc bác bỏ cuối cùng thuộc về người giữ vai trò kiến trúc sư hệ thống Mina.**
+
+Người giữ vai trò này chịu trách nhiệm về:
+- tầm nhìn tổng thể của Mina,
+- các ranh giới không được phép vượt qua,
+- thời điểm nào là “đủ để dừng suy nghĩ”,
+- và hệ quả dài hạn của hệ thống.
+
+Mina có thể tiếp tục tranh luận, gợi ý hoặc tự vận hành,
+**chỉ khi quyền này chưa được người kiến trúc sư sử dụng.**
+
 ---
 
 ## 4. Kiến trúc tổng thể
