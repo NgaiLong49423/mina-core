@@ -11,16 +11,16 @@ Multi-agent reasoning system with loop awareness, human-in-the-loop arbitration,
 ## 1. Mina là gì?
 
 **Mina** là một hệ thống AI đa tác tử (multi-agent) được thiết kế để:
-- Tư duy phản biện nội bộ và có khả năng phản biện cả User
-- Chấp nhận chuẩn tương đối theo ngữ cảnh
+- Tư duy phản biện nội bộ và có khả năng phản biện lại cả User, dựa trên dữ liệu thực tế để đưa ra phản biện có căn cứ
+- Chấp nhận chuẩn tương đối theo ngữ cảnh, không giả định tồn tại chuẩn tuyệt đối
 - Phát hiện và kiểm soát vòng lặp logic
 - Có sự tham gia của con người (*human-in-the-loop*) như một trọng tài, và cũng có thể là một "nhân vật" trong quá trình tư duy phản biện cùng AI – nhưng luôn có **quyền ưu tiên cao nhất**, vì hệ thống xoay quanh User chứ không phải AI
 - Là hệ thống học tập từ dữ liệu quá khứ của cả chính nó và của User
 
 Mục tiêu của Mina **không phải trả lời nhanh**, mà là:
 > **tạo ra reasoning có thể theo dõi, phản biện, chấm điểm và dừng đúng lúc;  
-> cho User thấy cái nhìn tổng quan nhất, còn quyết định cuối cùng là ở User.  
-> Hệ thống không quyết định hộ, mà đưa ra đánh giá và bức tranh toàn cảnh.**
+> cho User thấy cái nhìn tổng quan nhất, còn quyết định cuối cùng là ở User;  
+> Hệ thống không quyết định hộ, mà đưa ra đánh giá và bức tranh toàn cảnh, đồng thời có khả năng tự vận hành với chính nó dưới sự giám sát hoặc can thiệp của User.**
 
 ---
 
@@ -33,6 +33,8 @@ Các LLM hiện tại thường gặp các vấn đề:
 - Không biết khi nào nên dừng hoặc nhờ con người can thiệp
 - Không chạy ngầm, không biết khi nào đang "hoạt động", phải nhờ con người tự nhắc
 - Đưa ra thông tin một chiều, thiếu chiều sâu và thiếu bối cảnh lịch sử của User
+- Thiếu dữ liệu thật, tự dùng logic chính nó để suy diễn rồi dẫn đến sai
+- Không chấp nhận mình sai dù đã có User nhắc nhở
 
 👉 Mina được xây dựng để **chấp nhận những điểm yếu này là bản chất**,  
 và thiết kế hệ thống **xoay quanh việc kiểm soát chúng**, thay vì che giấu.
@@ -47,10 +49,12 @@ Mina vận hành dựa trên các trụ cột sau:
 - Nhiều agent với vai trò khác nhau, trong đó có một agent đặc biệt là **User**
 - Các agent **phản biện lẫn nhau**, không đồng thuận mù quáng
 - User là người đưa ra quyết định cuối cùng, hoặc có thể **ủy quyền** cho một agent khác theo mức độ ưu tiên được thiết kế ban đầu
+- Mục tiêu cao nhất của mỗi agent là đặt mình vào vị trí User và lựa chọn phương án có lợi nhất cho User.
+
 
 ### 3.2 Relative Truth (Chuẩn tương đối)
 - Không tồn tại “đúng tuyệt đối”
-- Mỗi kết luận phải gắn với **ngữ cảnh + giả định**
+- Mỗi kết luận phải gắn với **ngữ cảnh + giả định + dữ liệu thật**
 - Hệ thống và cả User cần hiểu lựa chọn đó đánh đổi gì: **lợi ích, rủi ro, và cái giá phải trả**
 
 ### 3.3 Loop Awareness & Control
@@ -91,6 +95,7 @@ Mina vận hành dựa trên các trụ cột sau:
   - phản hồi
   - điểm chất lượng tư duy
   - dữ liệu và lịch sử tương tác của người dùng
+  - dữ liệu thực tế xoay quanh người dùng, làm bằng chứng phản biện vững chắc nhất
   - tư duy và các phản biện của người dùng → cơ sở để tạo ra các **agent ảo** mô phỏng phong cách suy nghĩ của User (khi được User cho phép)
 
 - Bộ nhớ này ảnh hưởng trực tiếp tới các vòng suy luận sau:  
@@ -112,10 +117,13 @@ Mina được tách rõ giữa **Essence (tư duy)** và **Core (hệ thống)**
 - Điều phối agent
 - Quản lý vòng lặp & ưu tiên
 - Quyết định khi nào cần human-in-the-loop
+- Quản lý dữ liệu được nạp vào trong vòng phản biện, từ chối hoặc cho phép các agent lấy dữ liệu trên database nếu vẫn tuân thủ các nguyên tắc đã được thiết kế
 
 ### 4.2 LLM API
 - Chỉ đóng vai trò **bộ suy luận**
 - Không giữ trạng thái dài hạn
+- Có thể yêu cầu thêm dữ liệu từ Mina Core hoặc trực tiếp yêu cầu User cung cấp thêm bối cảnh thực tế
+- Có khả năng từ chối trả lời khi đang ở trong vòng lặp, hoặc khi không thể tính toán luồng suy luận một cách hợp tác với các agent khác 
 
 ### 4.3 Database (SQL)
 - Nguồn sự thật nhất quán (source of truth)
@@ -124,7 +132,7 @@ Mina được tách rõ giữa **Essence (tư duy)** và **Core (hệ thống)**
   - feedback
   - reasoning score
   - lịch sử mâu thuẫn
-  - dữ liệu người dùng, lịch sử người dùng
+  - dữ liệu người dùng (ưu tiên hàng đầu), cùng lịch sử tương tác của người dùng
 
 ### 4.4 Google Apps Script (GAS)
 - Tự động hóa

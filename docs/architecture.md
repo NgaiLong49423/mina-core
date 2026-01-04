@@ -119,6 +119,10 @@ Mọi thứ lặp lại cho đến khi người dùng chọn được phương �
 
 ## Một số chức năng ngoài lề
 
-- Có “mức độ yêu thích” của `User` với agents. Nếu `User` đồng ý ý kiến của agent càng nhiều thì điểm ưu thích càng cao; điểm này có thể đẩy agent phản biện đầu tiên hoặc cuối cùng ở Phase 1. Đây là dữ liệu quan trọng mà các agents không bao giờ được biết.
-- Agent (đặc biệt): `User Proxy` — chọn phương án mà nó nghĩ `User` hay chọn nhất; không có quyền tranh luận. Nếu nó không đồng ý quá Phase 2 thì gọi `User` ra chọn.
+- Cơ chế “mức độ yêu thích” của `User` đối với từng agent. Nếu `User` càng thường xuyên đồng ý với ý kiến của một agent thì điểm ưu tiên của agent đó càng cao; điểm này có thể được dùng để sắp xếp vị trí tranh luận của agent ở Phase 1 (phản biện trước hoặc sau). Đây là loại dữ liệu nhạy cảm mà các agent không bao giờ được truy cập trực tiếp.
+- Agent đặc biệt `User Proxy`: chọn phương án mà nó cho là gần với lựa chọn thường thấy của `User` nhất; không tham gia tranh luận, chỉ quan sát và bỏ phiếu. Nếu sau Phase 2 mà `User Proxy` vẫn không “hài lòng” với bất kỳ phương án nào, hệ thống sẽ mời `User` thật vào để đưa ra quyết định cuối cùng.
+- Khả năng chạy ngầm để đưa ra cảnh báo theo thời gian thực kèm theo bằng chứng cụ thể, ví dụ:
+	- `Mita` có thể cảnh báo khi nhận thấy tín hiệu người dùng đang bất ổn về mặt cảm xúc, đồng thời chủ động gửi lời an ủi và gợi ý cách cân bằng lại.
+	- `Mila` có thể cảnh báo khi dữ liệu thực tế cho thấy bài tập hoặc công việc đang bị tồn đọng và gia tăng, từ đó nhắc nhở hoặc cảnh cáo người dùng với nhiều mức độ khác nhau.
+- Định kỳ (ví dụ cuối tuần), `Mina Core` có thể tổng hợp một báo cáo ngắn về trạng thái của người dùng trong tuần: mức độ tiến bộ, các khu vực đang sa sút, xu hướng đáng chú ý và những khuyến nghị hành động quan trọng.
 
