@@ -98,7 +98,7 @@ Mọi thứ lặp lại cho đến khi người dùng chọn được phương �
 - `Mila`: không đồng ý vì sau khi xem xét bài tập thì `User` không đủ khả năng hoàn thành trước deadline. Việc đi bơi với bạn bè là không cần thiết → nhất quyết từ chối.
 - `Misa`: “tôi nghĩ” nên huỷ kèo; với thời gian hiện tại, nếu không cố gắng thì rất khó xử lý bài tập.
 - `Mita`: hãy lắng nghe trái tim; bạn đang đợi; cứ thoải mái đi chơi cho đời vui. Bài tập thì cố gắng hết sức sẽ xong.
-- `Mina`: cũng nghiêng về việc bỏ kèo để đi học; nếu rớt môn thì “toang” (vì thấy đã rớt 2 môn).
+- `Mina`: cũng nghiêng về việc bỏ kèo để đi học; nếu rớt môn thì “toang”. Vì môn này là môn qua trọng nhất kì ảnh hưởng lâu dài về sau.
 
 **Mina Core tổng hợp:** nhiều agent khuyên bỏ kèo để đi học vì việc học đang quan trọng.
 
