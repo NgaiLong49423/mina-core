@@ -153,7 +153,7 @@ Bạn phải làm được 5 việc sau:
 **Bạn phải nhìn thấy**
 ```bash
 $ python -m src.main
-RUN OK
+RUN OK  # ✅ Hoàn thành ngày 2026-01-07
 ```
 
 ---
@@ -309,7 +309,7 @@ requirements.txt
 
 ## 8) Checklist hoàn thành (đánh dấu xong là “có MVP”)
 ### MVP‑0 checklist
-- [ ] Chạy được `python -m src.main`
+- [x] Chạy được `python -m src.main` (hoàn thành 2026-01-07)
 - [ ] Planner + Solver mock hoạt động
 - [ ] Log JSONL theo step
 - [ ] Loop detector phát hiện lặp
